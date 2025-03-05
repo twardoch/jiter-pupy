@@ -8747,6 +8747,742 @@ Read file: src/jiter/__init__.py
 
 _****_
 
+Now I'll read the `jiter.py` file to understand what needs to be updated:
+
+---
+
+_****_
+
+Read file: src/jiter/jiter.py
+
+---
+
+_****_
+
+Let's also check the `__version__.py` file:
+
+---
+
+_****_
+
+Read file: src/jiter/__version__.py
+
+---
+
+_****_
+
+Now I'll update the `__init__.py` file in the new `jiter` directory:
+
+---
+
+_****_
+
+```diff
+  #!/usr/bin/env python3
+  """
+- jiter_pupy: Pure Python implementation of jiter
++ jiter: Pure Python implementation of jiter
+  
+  A drop-in replacement for the jiter package that is API-compatible with the original Rust-based implementation,
+  but uses only Python's standard library json module.
+  """
+- # this_file: src/jiter_pupy/__init__.py
++ # this_file: src/jiter/__init__.py
+  
+  from .jiter import (LosslessFloat, __version__, cache_clear, cache_usage,
+```
+
+---
+
+_****_
+
+Now I'll update the `jiter.py` file:
+
+---
+
+_****_
+
+```diff
+  #!/usr/bin/env python3
+  """
+- jiter_pupy: Pure Python implementation of jiter
++ jiter: Pure Python implementation of jiter
+  
+  A drop-in replacement for the jiter package that is API-compatible with the original Rust-based implementation,
+  Created by Adam Twardoch
+  """
+- # this_file: src/jiter_pupy/jiter.py
++ # this_file: src/jiter/jiter.py
+  
+  import json
+```
+
+---
+
+_****_
+
+Now I need to update the `pyproject.toml` file to reflect the new package name. Let's first check the current content:
+
+---
+
+_****_
+
+Read file: pyproject.toml
+
+---
+
+_****_
+
+Now I'll update the `pyproject.toml` file to reflect the new package name:
+
+---
+
+_****_
+
+```diff
+  # this_file: pyproject.toml
+  [project]
+- name = "jiter-pupy"
++ name = "jiter"
+  dynamic = ["version"]
+  description = ""
+  
+  [project.urls]
+- Documentation = "https://github.com/twardoch/jiter-pupy#readme"
+- Issues = "https://github.com/twardoch/jiter-pupy/issues"
+- Source = "https://github.com/twardoch/jiter-pupy"
++ Documentation = "https://github.com/twardoch/jiter#readme"
++ Issues = "https://github.com/twardoch/jiter/issues"
++ Source = "https://github.com/twardoch/jiter"
+  
+  
+  
+  [tool.coverage.paths]
+- jiter_pupy = ["src/jiter_pupy", "*/jiter-pupy/src/jiter_pupy"]
+- tests = ["tests", "*/jiter-pupy/tests"]
++ jiter = ["src/jiter", "*/jiter/src/jiter"]
++ tests = ["tests", "*/jiter/tests"]
+  
+  
+  
+  [tool.coverage.run]
+- source_pkgs = ["jiter_pupy", "tests"]
++ source_pkgs = ["jiter", "tests"]
+  branch = true
+  parallel = true
+  omit = [
+-     "src/jiter_pupy/__about__.py",
++     "src/jiter/__about__.py",
+  ]
+  
+  
+  
+  [tool.hatch.build.hooks.vcs]
+- version-file = "src/jiter_pupy/__version__.py"
++ version-file = "src/jiter/__version__.py"
+  
+  
+  [tool.hatch.build.targets.wheel]
+- packages = ["src/jiter_pupy"]
++ packages = ["src/jiter"]
+  
+  
+  [tool.hatch.envs.default.scripts]
+  test = "pytest {args:tests}"
+- test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/jiter_pupy --cov=tests {args:tests}"
+- type-check = "mypy src/jiter_pupy tests"
+- lint = ["ruff check src/jiter_pupy tests", "ruff format --respect-gitignore src/jiter_pupy tests"]
+- fix = ["ruff check  --fix --unsafe-fixes src/jiter_pupy tests", "ruff format --respect-gitignore src/jiter_pupy tests"]
++ test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/jiter --cov=tests {args:tests}"
++ type-check = "mypy src/jiter tests"
++ lint = ["ruff check src/jiter tests", "ruff format --respect-gitignore src/jiter tests"]
++ fix = ["ruff check  --fix --unsafe-fixes src/jiter tests", "ruff format --respect-gitignore src/jiter tests"]
+  
+  
+  
+  [tool.hatch.envs.lint.scripts]
+- typing = "mypy --install-types --non-interactive {args:src/jiter_pupy tests}"
++ typing = "mypy --install-types --non-interactive {args:src/jiter tests}"
+  style = ["ruff check {args:.}", "ruff format --respect-gitignore {args:.}"]
+  fmt = ["ruff format --respect-gitignore {args:.}", "ruff check --fix {args:.}"]
+  [tool.hatch.envs.test.scripts]
+  test = "python -m pytest -n auto -p no:briefcase {args:tests}"
+- test-cov = "python -m pytest -n auto -p no:briefcase --cov-report=term-missing --cov-config=pyproject.toml --cov=src/jiter_pupy --cov=tests {args:tests}"
++ test-cov = "python -m pytest -n auto -p no:briefcase --cov-report=term-missing --cov-config=pyproject.toml --cov=src/jiter --cov=tests {args:tests}"
+  bench = "python -m pytest -v -p no:briefcase tests/test_benchmark.py --benchmark-only"
+  bench-save = "python -m pytest -v -p no:briefcase tests/test_benchmark.py --benchmark-only --benchmark-json=benchmark/results.json"
+```
+
+---
+
+_****_
+
+Now I need to update the test files to use the new package name. Let's check the test files:
+
+---
+
+_****_
+
+<details>
+            <summary>Listed directory tests • **5** results</summary>
+        
+| Name |
+|-------|
+| 📄 `test_jiter.py` |
+| 📄 `test_package.py` |
+| 📁 `__pycache__` |
+| 📄 `test_basic.py` |
+| 📄 `test_benchmark.py` |
+
+</details>
+
+---
+
+_****_
+
+Let's check the content of each test file and update them:
+
+---
+
+_****_
+
+Read file: tests/test_basic.py
+
+---
+
+_****_
+
+Read file: tests/test_benchmark.py
+
+---
+
+_****_
+
+Read file: tests/test_jiter.py
+
+---
+
+_****_
+
+Read file: tests/test_package.py
+
+---
+
+_****_
+
+Now I'll update all the test files to use the new package name:
+
+---
+
+_****_
+
+```diff
+- """Basic test for jiter_pupy."""
++ """Basic test for jiter."""
+  
+  # this_file: tests/test_basic.py
+  sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+  
+- import jiter_pupy as jiter
++ import jiter
+  
+  
+```
+
+---
+
+_****_
+
+```diff
+- """Benchmark tests for jiter_pupy."""
++ """Benchmark tests for jiter."""
+  
+  # this_file: tests/test_benchmark.py
+  
+  import pytest
+- import jiter_pupy as jiter
++ import jiter
+  
+  
+```
+
+---
+
+_****_
+
+```diff
+- """Test suite for jiter_pupy's jiter implementation."""
++ """Test suite for jiter's implementation."""
+  
+  # this_file: tests/test_jiter.py
+  import pytest
+  
+- import jiter_pupy as jiter
++ import jiter
+  
+  
+```
+
+---
+
+_****_
+
+```diff
+- """Test suite for jiter_pupy."""
++ """Test suite for jiter."""
+  
+  
+  def test_version():
+      """Verify package exposes version."""
+-     import jiter_pupy
++     import jiter
+  
+-     assert jiter_pupy.__version__
++     assert jiter.__version__
+  
+```
+
+---
+
+_****_
+
+Now let's run the tests to see if our changes have fixed the import issues:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest tests/test_basic.py -v
+```
+
+```
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_benchmark/logger.py:39: PytestBenchmarkWarnin
+g: Benchmarks are automatically disabled because xdist plugin is a
+ctive.Benchmarks cannot be performed reliably in a parallelized en
+vironment.
+  warner(PytestBenchmarkWarning(text))
+Test session starts (platform: darwin, Python 3.12.8, pytest 8.3.4
+, pytest-sugar 1.0.0)
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleData
+base(PosixPath('/Users/adam/Developer/vcs/github.twardoch/pub/jite
+r_pupy/.hypothesis/examples'))
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=Fal
+se min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precisi
+on=10 warmup=False warmup_iterations=100000)
+Fugue tests will be initialized with options:
+rootdir: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy
+configfile: pyproject.toml
+plugins: recording-0.13.2, jaxtyping-0.2.37, cov-6.0.0, flake8-1.3
+.0, subtests-0.14.1, instafail-0.5.0, docker-3.1.2, jaraco.mongodb
+-12.1.2, enabler-3.3.0, ignore-flaky-2.2.1, integration-0.2.3, sug
+ar-1.0.0, langchain-0.1.0, env-1.1.5, socket-0.7.0, flaky-3.8.1, t
+ime-machine-2.16.0, shutil-1.8.1, asyncio-0.25.3, checkdocs-2.13.0
+, hypothesis-6.124.7, black-0.6.0, anyio-4.8.0, darkgraylib-1.2.1,
+ ruff-0.4.1, benchmark-5.1.0, pmxbot-1122.17.0, virtualenv-1.8.1,
+jaraco.vcs-2.4.0, perf-0.15.0, rerunfailures-15.0, fugue-0.9.2.dev
+1, timeout-2.3.1, mock-3.14.0, typeguard-4.4.2, logfire-3.4.0, das
+h-2.18.2, xdist-3.6.1, depends-1.0.1, requests-mock-1.12.1, syrupy
+-4.8.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+initialized: 8/8 workers/Library/Frameworks/Python.framework/Versi
+ons/3.12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207
+: PytestDeprecationWarning: The configuration option "asyncio_defa
+ult_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 2/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 3/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 4/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 5/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 6/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 7/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+8 workers [5 items]    
+scheduling tests via LoadScheduling
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+[gw4] PASSED tests/test_basic.py 
+
+ tests/test_basic.py::test_basic_parsing ✓          40% ████
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+ tests/test_basic.py:: ✓                            60% ██████
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_basic.py:: ✓✓                           80% ████████
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+ tests/test_basic.py::Black format check ✓         100% ██████████
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+Name                       Stmts   Miss Branch BrPart  Cover
+------------------------------------------------------------
+src/jiter/__init__.py          2      0      0      0   100%
+src/jiter/__version__.py       9      9      0      0     0%
+src/jiter/jiter.py           190    138    112      9    20%
+------------------------------------------------------------
+TOTAL                        201    147    112      9    20%
+
+
+====================== slowest 10 durations ======================
+0.99s call     tests/test_basic.py::black
+0.19s setup    tests/test_basic.py::black
+0.05s call     tests/test_basic.py::ruff
+0.04s call     tests/test_basic.py::ruff::format
+0.01s setup    tests/test_basic.py::test_basic_parsing
+0.01s setup    tests/test_basic.py::test_version
+0.00s call     tests/test_basic.py::test_basic_parsing
+0.00s setup    tests/test_basic.py::ruff
+0.00s setup    tests/test_basic.py::ruff::format
+0.00s teardown tests/test_basic.py::test_version
+
+Results (15.01s):
+       5 passed
+
+```
+
+---
+
+_****_
+
+Great! The basic tests are passing. Let's run all the tests to make sure everything is working correctly:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest -p no:xdist -v
+```
+
+```
+ tests/test_benchmark.py::test_benchmark_jiter_array ✓28% ██▊
+```
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+The repo still needs to be https://github.com/twardoch/jiter-pupy and on PyPI it's still needs to be https://pypi.org/project/jiter-pupy/
+
+---
+
+_**Assistant**_
+
+I understand that we need to keep the repository URL and PyPI package name as `jiter-pupy`, while allowing users to import the package as `jiter`. Let's update the configuration to reflect this.
+
+I'll update the `pyproject.toml` file to maintain the original repository and PyPI package name while keeping the import name as `jiter`:
+
+---
+
+_****_
+
+```diff
+  # this_file: pyproject.toml
+  [project]
+- name = "jiter"
++ name = "jiter-pupy"
+  dynamic = ["version"]
+  description = ""
+  
+  [project.urls]
+- Documentation = "https://github.com/twardoch/jiter#readme"
+- Issues = "https://github.com/twardoch/jiter/issues"
+- Source = "https://github.com/twardoch/jiter"
++ Documentation = "https://github.com/twardoch/jiter-pupy#readme"
++ Issues = "https://github.com/twardoch/jiter-pupy/issues"
++ Source = "https://github.com/twardoch/jiter-pupy"
+  
+  
+```
+
+---
+
+_****_
+
+Now we need to create a special setup to allow users to import the package as `jiter` while keeping the PyPI package name as `jiter-pupy`. Let's create a `src/jiter_pupy/__init__.py` file that will redirect imports to the `jiter` module:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && mkdir -p src/jiter_pupy
+```
+
+```
+(jiter_pupy) adam@Hamlet jiter_pupy % cd /Users/adam/Developer/vcs
+/github.twardoch/pub/jiter_pupy && mkdir -p src/jitecd /Users/adam
+/Developer/vcs/github.twardoch/pub/jiter_pupy && mkdir -p src/jite
+r_pupy
+%                                                                 
+(jiter_pupy) adam@Hamlet jiter_pupy %
+```
+
+---
+
+_****_
+
+Now let's create a redirection file in the `jiter_pupy` directory:
+
+---
+
+_****_
+
+```diff
+- 
++ #!/usr/bin/env python3
++ """
++ jiter_pupy: Pure Python implementation of jiter
++ 
++ A drop-in replacement for the jiter package that is API-compatible with the original Rust-based implementation,
++ but uses only Python's standard library json module.
++ 
++ This module re-exports everything from the jiter module to maintain backward compatibility.
++ """
++ # this_file: src/jiter_pupy/__init__.py
++ 
++ import sys
++ from pathlib import Path
++ 
++ # Add the src directory to the Python path if needed
++ src_path = Path(__file__).parent.parent
++ if str(src_path) not in sys.path:
++     sys.path.insert(0, str(src_path))
++ 
++ # Import everything from jiter
++ from jiter import *  # noqa
++ 
++ # Re-export all symbols
++ __all__ = jiter.__all__  # type: ignore # noqa 
+```
+
+---
+
+_****_
+
+Let's fix the linter errors in the `jiter_pupy/__init__.py` file:
+
+---
+
+_****_
+
+```diff
+  
+  # Import everything from jiter
++ try:
+      from jiter import *  # noqa
+- 
+- # Re-export all symbols
+- __all__ = jiter.__all__  # type: ignore # noqa
++     from jiter import __all__
++ except ImportError:
++     # If jiter is not found, import directly from the jiter module in this package
++     from jiter.jiter import (LosslessFloat, __version__, cache_clear, cache_usage,
++                         from_json)
++     
++     __all__ = [
++         "LosslessFloat",
++         "__version__",
++         "cache_clear",
++         "cache_usage",
++         "from_json",
++     ]
+  
+```
+
+---
+
+_****_
+
+Now let's update the `pyproject.toml` file to include both packages in the wheel:
+
+---
+
+_****_
+
+```diff
+  
+  [tool.hatch.build.targets.wheel]
+- packages = ["src/jiter"]
++ packages = ["src/jiter", "src/jiter_pupy"]
+  
+  
+```
+
+---
+
+_****_
+
+Let's also update the coverage paths to include both packages:
+
+---
+
+_****_
+
+
+
+---
+
+_****_
+
 
 
 ---

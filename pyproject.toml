@@ -63,8 +63,8 @@ requires = [
 
 
 [tool.coverage.paths]
-jiter = ["src/jiter", "*/jiter/src/jiter"]
-tests = ["tests", "*/jiter/tests"]
+jiter = ["src/jiter", "*/jiter-pupy/src/jiter"]
+tests = ["tests", "*/jiter-pupy/tests"]
 
 
 
@@ -85,12 +85,11 @@ omit = [
 
 
 
-[tool.hatch.build.hooks.vcs]
-version-file = "src/jiter/__version__.py"
-
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/jiter"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/jiter" = "jiter"
 
 
 
