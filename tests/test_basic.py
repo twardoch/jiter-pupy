@@ -1,4 +1,4 @@
-"""Basic test for jiter_pupy."""
+"""Basic test for jiter."""
 
 # this_file: tests/test_basic.py
 
@@ -8,7 +8,7 @@ from pathlib import Path
 # Add the src directory to the Python path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-import jiter_pupy as jiter
+import jiter
 
 
 def test_basic_parsing():

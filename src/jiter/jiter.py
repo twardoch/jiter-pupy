@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-jiter_pupy: Pure Python implementation of jiter
+jiter: Pure Python implementation of jiter
 
 A drop-in replacement for the jiter package that is API-compatible with the original Rust-based implementation,
 but uses only Python's standard library json module.
 
 Created by Adam Twardoch
 """
-# this_file: src/jiter_pupy/jiter.py
+# this_file: src/jiter/jiter.py
 
 import json
 import re

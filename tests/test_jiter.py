@@ -1,4 +1,5 @@
-"""Test suite for jiter_pupy's jiter implementation."""
+"""Test suite for jiter's implementation."""
+
 # this_file: tests/test_jiter.py
 
 import math
@@ -6,7 +7,7 @@ from decimal import Decimal
 
 import pytest
 
-import jiter_pupy as jiter
+import jiter
 
 
 def test_basic_parsing():

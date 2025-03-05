@@ -4492,8 +4492,4256 @@ cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest 
 ```
 
 ```
-initialized: 1/8 workers
+adam@Hamlet jiter_pupy % 
+    def thread_exception_runtest_hook() -> Generator[None]:
+        with catch_threading_exception() as cm:
+            try:
+>               yield
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/threadexception.py:68:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffItem ruff>}, firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+                        res = hook_impl.function(*args)
+                        if res is not None:
+                            results.append(res)
+                            if firstresult:  # halt further impl c
+alls
+                                break
+            except BaseException as exc:
+                exception = exc
+        finally:
+            # Fast path - only new-style wrappers, no Result.
+            if only_new_style_wrappers:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    result = results[0] if results else None
+                else:
+                    result = results
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    try:
+                        if exception is not None:
+                            teardown.throw(exception)  # type: ign
+ore[union-attr]
+                        else:
+                            teardown.send(result)  # type: ignore[
+union-attr]
+                        # Following is unreachable for a well beha
+ved hook wrapper.
+                        # Try to force finalizers otherwise postpo
+ned till GC action.
+                        # Note: close() may raise if generator han
+dles GeneratorExit.
+                        teardown.close()  # type: ignore[union-att
+r]
+                    except StopIteration as si:
+                        result = si.value
+                        exception = None
+                        continue
+                    except BaseException as e:
+                        exception = e
+                        continue
+                    _raise_wrapfail(teardown, "has second yield") 
+ # type: ignore[arg-type]
+    
+                if exception is not None:
+                    raise exception.with_traceback(exception.__tra
+ceback__)
+                else:
+                    return result
+    
+            # Slow path - need to support old-style wrappers.
+            else:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    outcome: Result[object | list[object]] = Resul
+t(
+                        results[0] if results else None, exception
+                    )
+                else:
+                    outcome = Result(results, exception)
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    if isinstance(teardown, tuple):
+                        try:
+                            teardown[0].send(outcome)
+                        except StopIteration:
+                            pass
+                        except BaseException as e:
+                            _warn_teardown_exception(hook_name, te
+ardown[1], e)
+                            raise
+                        else:
+                            _raise_wrapfail(teardown[0], "has seco
+nd yield")
+                    else:
+                        try:
+                            if outcome._exception is not None:
+>                               teardown.throw(outcome._exception)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:167:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @pytest.hookimpl(wrapper=True, tryfirst=True)
+    def pytest_runtest_call() -> Generator[None]:
+>       yield from unraisable_exception_runtest_hook()
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/unraisableexception.py:95:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def unraisable_exception_runtest_hook() -> Generator[None]:
+        with catch_unraisable_exception() as cm:
+            try:
+>               yield
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/unraisableexception.py:70:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffItem ruff>}, firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+                        res = hook_impl.function(*args)
+                        if res is not None:
+                            results.append(res)
+                            if firstresult:  # halt further impl c
+alls
+                                break
+            except BaseException as exc:
+                exception = exc
+        finally:
+            # Fast path - only new-style wrappers, no Result.
+            if only_new_style_wrappers:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    result = results[0] if results else None
+                else:
+                    result = results
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    try:
+                        if exception is not None:
+                            teardown.throw(exception)  # type: ign
+ore[union-attr]
+                        else:
+                            teardown.send(result)  # type: ignore[
+union-attr]
+                        # Following is unreachable for a well beha
+ved hook wrapper.
+                        # Try to force finalizers otherwise postpo
+ned till GC action.
+                        # Note: close() may raise if generator han
+dles GeneratorExit.
+                        teardown.close()  # type: ignore[union-att
+r]
+                    except StopIteration as si:
+                        result = si.value
+                        exception = None
+                        continue
+                    except BaseException as e:
+                        exception = e
+                        continue
+                    _raise_wrapfail(teardown, "has second yield") 
+ # type: ignore[arg-type]
+    
+                if exception is not None:
+                    raise exception.with_traceback(exception.__tra
+ceback__)
+                else:
+                    return result
+    
+            # Slow path - need to support old-style wrappers.
+            else:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    outcome: Result[object | list[object]] = Resul
+t(
+                        results[0] if results else None, exception
+                    )
+                else:
+                    outcome = Result(results, exception)
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    if isinstance(teardown, tuple):
+                        try:
+                            teardown[0].send(outcome)
+                        except StopIteration:
+                            pass
+                        except BaseException as e:
+                            _warn_teardown_exception(hook_name, te
+ardown[1], e)
+                            raise
+                        else:
+                            _raise_wrapfail(teardown[0], "has seco
+nd yield")
+                    else:
+                        try:
+                            if outcome._exception is not None:
+>                               teardown.throw(outcome._exception)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:167:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_pytest.logging.LoggingPlugin object at 0x1150be960>
+item = <RuffItem ruff>
+
+    @hookimpl(wrapper=True)
+    def pytest_runtest_call(self, item: nodes.Item) -> Generator[N
+one]:
+        self.log_cli_handler.set_when("call")
+    
+>       yield from self._runtest_for(item, "call")
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/logging.py:846:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_pytest.logging.LoggingPlugin object at 0x1150be960>
+item = <RuffItem ruff>, when = 'call'
+
+    def _runtest_for(self, item: nodes.Item, when: str) -> Generat
+or[None]:
+        """Implement the internals of the pytest_runtest_xxx() hoo
+ks."""
+        with catching_logs(
+            self.caplog_handler,
+            level=self.log_level,
+        ) as caplog_handler, catching_logs(
+            self.report_handler,
+            level=self.log_level,
+        ) as report_handler:
+            caplog_handler.reset()
+            report_handler.reset()
+            item.stash[caplog_records_key][when] = caplog_handler.
+records
+            item.stash[caplog_handler_key] = caplog_handler
+    
+            try:
+>               yield
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/logging.py:829:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffItem ruff>}, firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+                        res = hook_impl.function(*args)
+                        if res is not None:
+                            results.append(res)
+                            if firstresult:  # halt further impl c
+alls
+                                break
+            except BaseException as exc:
+                exception = exc
+        finally:
+            # Fast path - only new-style wrappers, no Result.
+            if only_new_style_wrappers:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    result = results[0] if results else None
+                else:
+                    result = results
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    try:
+                        if exception is not None:
+                            teardown.throw(exception)  # type: ign
+ore[union-attr]
+                        else:
+                            teardown.send(result)  # type: ignore[
+union-attr]
+                        # Following is unreachable for a well beha
+ved hook wrapper.
+                        # Try to force finalizers otherwise postpo
+ned till GC action.
+                        # Note: close() may raise if generator han
+dles GeneratorExit.
+                        teardown.close()  # type: ignore[union-att
+r]
+                    except StopIteration as si:
+                        result = si.value
+                        exception = None
+                        continue
+                    except BaseException as e:
+                        exception = e
+                        continue
+                    _raise_wrapfail(teardown, "has second yield") 
+ # type: ignore[arg-type]
+    
+                if exception is not None:
+                    raise exception.with_traceback(exception.__tra
+ceback__)
+                else:
+                    return result
+    
+            # Slow path - need to support old-style wrappers.
+            else:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    outcome: Result[object | list[object]] = Resul
+t(
+                        results[0] if results else None, exception
+                    )
+                else:
+                    outcome = Result(results, exception)
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    if isinstance(teardown, tuple):
+                        try:
+                            teardown[0].send(outcome)
+                        except StopIteration:
+                            pass
+                        except BaseException as e:
+                            _warn_teardown_exception(hook_name, te
+ardown[1], e)
+                            raise
+                        else:
+                            _raise_wrapfail(teardown[0], "has seco
+nd yield")
+                    else:
+                        try:
+                            if outcome._exception is not None:
+>                               teardown.throw(outcome._exception)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:167:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <CaptureManager _method='fd' _global_capturing=<MultiCaptur
+e out=<FDCapture 1 oldfd=7 _state='suspended' tmpfile=<_io....xtIO
+Wrapper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspe
+nded' _in_suspended=False> _capture_fixture=None>
+item = <RuffItem ruff>
+
+    @hookimpl(wrapper=True)
+    def pytest_runtest_call(self, item: Item) -> Generator[None]:
+        with self.item_capture("call", item):
+>           return (yield)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/capture.py:880:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffItem ruff>}, firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+                        res = hook_impl.function(*args)
+                        if res is not None:
+                            results.append(res)
+                            if firstresult:  # halt further impl c
+alls
+                                break
+            except BaseException as exc:
+                exception = exc
+        finally:
+            # Fast path - only new-style wrappers, no Result.
+            if only_new_style_wrappers:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    result = results[0] if results else None
+                else:
+                    result = results
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    try:
+                        if exception is not None:
+                            teardown.throw(exception)  # type: ign
+ore[union-attr]
+                        else:
+                            teardown.send(result)  # type: ignore[
+union-attr]
+                        # Following is unreachable for a well beha
+ved hook wrapper.
+                        # Try to force finalizers otherwise postpo
+ned till GC action.
+                        # Note: close() may raise if generator han
+dles GeneratorExit.
+                        teardown.close()  # type: ignore[union-att
+r]
+                    except StopIteration as si:
+                        result = si.value
+                        exception = None
+                        continue
+                    except BaseException as e:
+                        exception = e
+                        continue
+                    _raise_wrapfail(teardown, "has second yield") 
+ # type: ignore[arg-type]
+    
+                if exception is not None:
+                    raise exception.with_traceback(exception.__tra
+ceback__)
+                else:
+                    return result
+    
+            # Slow path - need to support old-style wrappers.
+            else:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    outcome: Result[object | list[object]] = Resul
+t(
+                        results[0] if results else None, exception
+                    )
+                else:
+                    outcome = Result(results, exception)
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    if isinstance(teardown, tuple):
+                        try:
+                            teardown[0].send(outcome)
+                        except StopIteration:
+                            pass
+                        except BaseException as e:
+                            _warn_teardown_exception(hook_name, te
+ardown[1], e)
+                            raise
+                        else:
+                            _raise_wrapfail(teardown[0], "has seco
+nd yield")
+                    else:
+                        try:
+                            if outcome._exception is not None:
+>                               teardown.throw(outcome._exception)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:167:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = <RuffItem ruff>
+
+    @hookimpl(wrapper=True)
+    def pytest_runtest_call(item: Item) -> Generator[None]:
+        xfailed = item.stash.get(xfailed_key, None)
+        if xfailed is None:
+            item.stash[xfailed_key] = xfailed = evaluate_xfail_mar
+ks(item)
+    
+        if xfailed and not item.config.option.runxfail and not xfa
+iled.run:
+            xfail("[NOTRUN] " + xfailed.reason)
+    
+        try:
+>           return (yield)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/skipping.py:257:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffItem ruff>}, firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+>                       res = hook_impl.function(*args)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:103:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = <RuffItem ruff>
+
+    def pytest_runtest_call(item: Item) -> None:
+        _update_current_test_var(item, "call")
+        try:
+            del sys.last_type
+            del sys.last_value
+            del sys.last_traceback
+            if sys.version_info >= (3, 12, 0):
+                del sys.last_exc  # type:ignore[attr-defined]
+        except AttributeError:
+            pass
+        try:
+>           item.runtest()
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/runner.py:174:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RuffItem ruff>
+
+    def runtest(self):
+>       self.handler(path=self.fspath)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_ruff/__init__.py:141:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RuffItem ruff>
+path = local('/Users/adam/Developer/vcs/github.twardoch/pub/jiter_
+pupy/tests/test_benchmark.py')
+
+    def handler(self, path):
+>       return check_file(path)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_ruff/__init__.py:151:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = local('/Users/adam/Developer/vcs/github.twardoch/pub/jiter_
+pupy/tests/test_benchmark.py')
+
+    def check_file(path):
+        ruff = find_ruff_bin()
+        command = [
+            ruff,
+            "check",
+            path,
+            "--quiet",
+            "--output-format=full",
+            "--force-exclude",
+        ]
+        child = Popen(command, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = child.communicate()
+    
+        if child.returncode == 1:
+>           raise RuffError(stdout.decode())
+E           pytest_ruff.RuffError: tests/test_benchmark.py:14:8: P
+LR0402 [*] Use `from jiter_pupy import jiter` in lieu of alias
+E              |
+E           12 | sys.path.insert(0, str(Path(__file__).parent.pare
+nt / "src"))
+E           13 |
+E           14 | import jiter_pupy.jiter as jiter  # noqa: E402
+E              |        ^^^^^^^^^^^^^^^^^^^^^^^^^ PLR0402
+E           15 |
+E           16 | # Sample JSON data for benchmarking
+E              |
+E              = help: Replace with `from jiter_pupy import jiter`
+E           
+E           tests/test_benchmark.py:14:35: RUF100 [*] Unused `noqa
+` directive (unused: `E402`)
+E              |
+E           12 | sys.path.insert(0, str(Path(__file__).parent.pare
+nt / "src"))
+E           13 |
+E           14 | import jiter_pupy.jiter as jiter  # noqa: E402
+E              |                                   ^^^^^^^^^^^^ RU
+F100
+E           15 |
+E           16 | # Sample JSON data for benchmarking
+E              |
+E              = help: Remove unused `noqa` directive
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_ruff/__init__.py:101: RuffError
+
+ tests/test_benchmark.py:: ⨯                         6% ▋
+
+ tests/test_benchmark.py:: ⨯✓                       12% █▎
+
+[gw2] PASSED tests/test_benchmark.py 
+ tests/test_benchmark.py::test_benchmark_jiter_keys_cache ✓18% █▊ 
+       ASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_float_mode ✓24% ██▍
+       ASSED tests/test_benchmark.py
+ tests/test_benchmark.py::Black format check ✓      29% ██▉
+
+[gw4] PASSED tests/test_benchmark.py 
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+ tests/test_benchmark.py::test_benchmark_jiter_lossless_float_mode
+ ✓35% ███▌      ts/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_simple ✓41% ████▎
+
+   /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.
+12/site-packages/coverage/inorout.py:508: CoverageWarning: Module
+tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_no_cache ✓47% ████▊
+     /Library/Frameworks/Python.framework/Versions/3.12/lib/python
+3.12/site-packages/coverage/inorout.py:508: CoverageWarning: Modul
+e tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_decimal_mode ✓53% █
+████▍    SED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_stdlib_simple ✓59% █████▉
+    ] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_array ✓65% ██████▌ 
+  /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.1
+2/site-packages/coverage/inorout.py:508: CoverageWarning: Module t
+ests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_stdlib_nested ✓71% ██████
+█▏  ] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_stdlib_large_array ✓76% █
+██████▋  SED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_stdlib_array ✓82% ███████
+█▎ 0] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_large_array ✓88% ██
+██████▉ /Library/Frameworks/Python.framework/Versions/3.12/lib/pyt
+hon3.12/site-packages/coverage/inorout.py:508: CoverageWarning: Mo
+dule tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_all_cache ✓94% ████
+█████▌/Library/Frameworks/Python.framework/Versions/3.12/lib/pytho
+n3.12/site-packages/coverage/inorout.py:508: CoverageWarning: Modu
+le tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_nested ✓100% ██████
+████/Library/Frameworks/Python.framework/Versions/3.12/lib/python3
+.12/site-packages/coverage/inorout.py:508: CoverageWarning: Module
+ tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+Name                            Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------
+src/jiter_pupy/__init__.py          2      0      0      0   100%
+src/jiter_pupy/__version__.py       9      9      0      0     0%
+src/jiter_pupy/jiter.py           190    133    112      8    23%
+-----------------------------------------------------------------
+TOTAL                             201    142    112      8    23%
+
+
+====================== slowest 10 durations ======================
+6.71s call     tests/test_benchmark.py::test_benchmark_stdlib_arra
+y
+6.58s call     tests/test_benchmark.py::test_benchmark_stdlib_larg
+e_array
+6.45s call     tests/test_benchmark.py::test_benchmark_stdlib_nest
+ed
+4.45s call     tests/test_benchmark.py::test_benchmark_stdlib_simp
+le
+2.44s call     tests/test_benchmark.py::test_benchmark_jiter_no_ca
+che
+2.41s call     tests/test_benchmark.py::test_benchmark_jiter_decim
+al_mode
+1.73s call     tests/test_benchmark.py::black
+1.72s call     tests/test_benchmark.py::test_benchmark_jiter_float
+_mode
+1.59s call     tests/test_benchmark.py::test_benchmark_jiter_keys_
+cache
+1.43s call     tests/test_benchmark.py::test_benchmark_jiter_lossl
+ess_float_mode
+==================== short test summary info =====================
+FAILED tests/test_benchmark.py::ruff - pytest_ruff.RuffError: test
+s/test_benchmark.py:14:8: PLR0402 [*] Use `from jiter_pupy import
+jiter` in lieu of alias
+   |
+12 | sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+13 |
+14 | import jiter_pupy.jiter as jiter  # noqa: E402
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^ PLR0402
+15 |
+16 | # Sample JSON data for benchmarking
+   |
+   = help: Replace with `from jiter_pupy import jiter`
+
+tests/test_benchmark.py:14:35: RUF100 [*] Unused `noqa` directive 
+(unused: `E402`)
+   |
+12 | sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+13 |
+14 | import jiter_pupy.jiter as jiter  # noqa: E402
+   |                                   ^^^^^^^^^^^^ RUF100
+15 |
+16 | # Sample JSON data for benchmarking
+   |
+   = help: Remove unused `noqa` directive
+
+Results (24.56s):
+      16 passed
+       1 failed
+         - tests/test_benchmark.py:? 
+
 ```
+
+---
+
+_****_
+
+Let's fix the linting issues in the benchmark test file:
+
+---
+
+_****_
+
+```diff
+  sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+  
+- import jiter_pupy.jiter as jiter  # noqa: E402
++ from jiter_pupy import jiter
+  
+  # Sample JSON data for benchmarking
+```
+
+---
+
+_****_
+
+Now let's run the benchmark tests again:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest -v tests/test_benchmark.py
+```
+
+```
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_benchmark/logger.py:39: PytestBenchmarkWarnin
+g: Benchmarks are automatically disabled because xdist plugin is a
+ctive.Benchmarks cannot be performed reliably in a parallelized en
+vironment.
+  warner(PytestBenchmarkWarning(text))
+Test session starts (platform: darwin, Python 3.12.8, pytest 8.3.4
+, pytest-sugar 1.0.0)
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleData
+base(PosixPath('/Users/adam/Developer/vcs/github.twardoch/pub/jite
+r_pupy/.hypothesis/examples'))
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=Fal
+se min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precisi
+on=10 warmup=False warmup_iterations=100000)
+Fugue tests will be initialized with options:
+rootdir: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy
+configfile: pyproject.toml
+plugins: recording-0.13.2, jaxtyping-0.2.37, cov-6.0.0, flake8-1.3
+.0, subtests-0.14.1, instafail-0.5.0, docker-3.1.2, jaraco.mongodb
+-12.1.2, enabler-3.3.0, ignore-flaky-2.2.1, integration-0.2.3, sug
+ar-1.0.0, langchain-0.1.0, env-1.1.5, socket-0.7.0, flaky-3.8.1, t
+ime-machine-2.16.0, shutil-1.8.1, asyncio-0.25.3, checkdocs-2.13.0
+, hypothesis-6.124.7, black-0.6.0, anyio-4.8.0, darkgraylib-1.2.1,
+ ruff-0.4.1, benchmark-5.1.0, pmxbot-1122.17.0, virtualenv-1.8.1,
+jaraco.vcs-2.4.0, perf-0.15.0, rerunfailures-15.0, fugue-0.9.2.dev
+1, timeout-2.3.1, mock-3.14.0, typeguard-4.4.2, logfire-3.4.0, das
+h-2.18.2, xdist-3.6.1, depends-1.0.1, requests-mock-1.12.1, syrupy
+-4.8.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+initialized: 8/8 workers/Library/Frameworks/Python.framework/Versi
+ons/3.12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207
+: PytestDeprecationWarning: The configuration option "asyncio_defa
+ult_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 1/8 workers      /Library/Frameworks/Python.framework/Versi
+ons/3.12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207
+: PytestDeprecationWarning: The configuration option "asyncio_defa
+ult_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 2/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 3/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 4/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 5/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 6/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 7/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+collecting 0 items / 1 error                                     
+―――――――――――― ERROR collecting tests/test_benchmark.py ――――――――――――
+ImportError while importing test module '/Users/adam/Developer/vcs
+/github.twardoch/pub/jiter_pupy/tests/test_benchmark.py'.
+Hint: make sure your test modules/packages have valid Python names
+.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/python.py:493: in importtestmodule
+    mod = import_path(
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/assertion/rewrite.py:184: in exec_module
+    exec(co, module.__dict__)
+tests/test_benchmark.py:11: in <module>
+    from jiter_pupy import jiter
+E   ModuleNotFoundError: No module named 'jiter_pupy'
+8 workers [3 items]    
+scheduling tests via LoadScheduling
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-n/Li
+brary/Frameworks/Python.framework/Versions/3.12/lib/python3.12/sit
+e-packages/coverage/inorout.py:508: CoverageWarning: Module tests
+was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+ot-imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Pyt/Library/Frameworks/Python.framework/Versio
+ns/3.12/lib/python3.12/site-packages/coverage/control.py:892: Cove
+rageWarning: No data was collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+hon.framework/Versions/3.12/lib/python3.12/site-packages/coverage/
+control.py:892: CoverageWarning: No data was collected. (no-data-c
+ollected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+
+ tests/test_benchmark.py:: ✓                        33% ███▍
+
+ tests/test_benchmark.py:: ✓✓                       67% ██████▋
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+
+ tests/test_benchmark.py::Black format check ✓     100% ██████████
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+
+WARNING: Failed to generate report: No data to report.
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_cov/plugin.py:341: CovReportWarning: Failed t
+o generate report: No data to report.
+
+  warnings.warn(CovReportWarning(message), stacklevel=1)
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+
+
+====================== slowest 10 durations ======================
+1.08s call     tests/test_benchmark.py::black
+0.20s setup    tests/test_benchmark.py::black
+0.05s call     tests/test_benchmark.py::ruff::format
+0.04s call     tests/test_benchmark.py::ruff
+0.00s setup    tests/test_benchmark.py::ruff
+0.00s setup    tests/test_benchmark.py::ruff::format
+0.00s teardown tests/test_benchmark.py::ruff
+0.00s teardown tests/test_benchmark.py::ruff::format
+0.00s teardown tests/test_benchmark.py::black
+==================== short test summary info =====================
+FAILED tests/test_benchmark.py
+
+Results (18.80s):
+       3 passed
+
+```
+
+---
+
+_****_
+
+Let's try a different approach for the benchmark test. Let's modify it to use the same approach as the basic test file that's working:
+
+---
+
+_****_
+
+```diff
+  
+  import pytest
+- 
+- from jiter_pupy import jiter
+  
+  # Add the src directory to the Python path
+  sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+  
++ import jiter_pupy.jiter as jiter  # noqa: E402
+  
+  # Sample JSON data for benchmarking
+```
+
+---
+
+_****_
+
+Let's run the tests again with the `-xvs` flag to disable xdist (parallel testing) which might be causing issues with the benchmark tests:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest -xvs tests/test_benchmark.py
+```
+
+```
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_benchmark/logger.py:39: PytestBenchmarkWarnin
+g: Benchmarks are automatically disabled because xdist plugin is a
+ctive.Benchmarks cannot be performed reliably in a parallelized en
+vironment.
+  warner(PytestBenchmarkWarning(text))
+Test session starts (platform: darwin, Python 3.12.8, pytest 8.3.4
+, pytest-sugar 1.0.0)
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleData
+base(PosixPath('/Users/adam/Developer/vcs/github.twardoch/pub/jite
+r_pupy/.hypothesis/examples'))
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=Fal
+se min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precisi
+on=10 warmup=False warmup_iterations=100000)
+Fugue tests will be initialized with options:
+rootdir: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy
+configfile: pyproject.toml
+plugins: recording-0.13.2, jaxtyping-0.2.37, cov-6.0.0, flake8-1.3
+.0, subtests-0.14.1, instafail-0.5.0, docker-3.1.2, jaraco.mongodb
+-12.1.2, enabler-3.3.0, ignore-flaky-2.2.1, integration-0.2.3, sug
+ar-1.0.0, langchain-0.1.0, env-1.1.5, socket-0.7.0, flaky-3.8.1, t
+ime-machine-2.16.0, shutil-1.8.1, asyncio-0.25.3, checkdocs-2.13.0
+, hypothesis-6.124.7, black-0.6.0, anyio-4.8.0, darkgraylib-1.2.1,
+ ruff-0.4.1, benchmark-5.1.0, pmxbot-1122.17.0, virtualenv-1.8.1,
+jaraco.vcs-2.4.0, perf-0.15.0, rerunfailures-15.0, fugue-0.9.2.dev
+1, timeout-2.3.1, mock-3.14.0, typeguard-4.4.2, logfire-3.4.0, das
+h-2.18.2, xdist-3.6.1, depends-1.0.1, requests-mock-1.12.1, syrupy
+-4.8.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+initialized: 8/8 workers/Library/Frameworks/Python.framework/Versi
+ons/3.12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207
+: PytestDeprecationWarning: The configuration option "asyncio_defa
+ult_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+collecting 0 items / 1 error                                     
+―――――――――――― ERROR collecting tests/test_benchmark.py ――――――――――――
+ImportError while importing test module '/Users/adam/Developer/vcs
+/github.twardoch/pub/jiter_pupy/tests/test_benchmark.py'.
+Hint: make sure your test modules/packages have valid Python names
+.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/python.py:493: in importtestmodule
+    mod = import_path(
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/assertion/rewrite.py:184: in exec_module
+    exec(co, module.__dict__)
+tests/test_benchmark.py:11: in <module>
+    from jiter_pupy import jiter
+E   ModuleNotFoundError: No module named 'jiter_pupy'
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module jit
+er_pupy was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/control.py:892: CoverageWarning: No data wa
+s collected. (no-data-collected)
+  self._warn("No data was collected.", slug="no-data-collected")
+
+WARNING: Failed to generate report: No data to report.
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_cov/plugin.py:341: CovReportWarning: Failed t
+o generate report: No data to report.
+
+  warnings.warn(CovReportWarning(message), stacklevel=1)
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+
+==================== short test summary info =====================
+FAILED tests/test_benchmark.py
+!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!
+!!!!! xdist.dsession.Interrupted: stopping after 1 failures !!!!!!
+
+Results (17.30s):
+
+```
+
+---
+
+_****_
+
+We're still facing the same issue with importing the `jiter_pupy` module. Let's check the project structure to better understand how we should set up the imports:
+
+---
+
+_****_
+
+<details>
+            <summary>Listed current directory • **20** results</summary>
+        
+| Name |
+|-------|
+| 📄 `.coverage` |
+| 📁 `tests` |
+| 📁 `.git` |
+| 📁 `.venv` |
+| 📄 `uv.lock` |
+| 📄 `README.md` |
+| 📁 `.pytest_cache` |
+| 📁 `.ruff_cache` |
+| 📁 `.benchmarks` |
+| 📄 `TODO.md` |
+| 📁 `.specstory` |
+| 📄 `package.toml` |
+| 📁 `.github` |
+| 📁 `dist` |
+| 📄 `.pre-commit-config.yaml` |
+| 📄 `LICENSE` |
+| 📄 `.gitignore` |
+| 📄 `pyproject.toml` |
+| 📁 `src` |
+| 📄 `jiter-python.txt` |
+
+</details>
+
+---
+
+_****_
+
+Let's check the src directory to see how the package is structured:
+
+---
+
+_****_
+
+<details>
+            <summary>Listed directory src • **1** results</summary>
+        
+| Name |
+|-------|
+| 📁 `jiter_pupy` |
+
+</details>
+
+---
+
+_****_
+
+Let's check the contents of the jiter_pupy directory:
+
+---
+
+_****_
+
+<details>
+            <summary>Listed directory src/jiter_pupy • **4** results</summary>
+        
+| Name |
+|-------|
+| 📄 `__version__.py` |
+| 📁 `__pycache__` |
+| 📄 `jiter.py` |
+| 📄 `__init__.py` |
+
+</details>
+
+---
+
+_****_
+
+Now let's check the tests directory:
+
+---
+
+_****_
+
+<details>
+            <summary>Listed directory tests • **5** results</summary>
+        
+| Name |
+|-------|
+| 📄 `test_benchmark.py` |
+| 📁 `__pycache__` |
+| 📄 `test_basic.py` |
+| 📄 `test_jiter.py` |
+| 📄 `test_package.py` |
+
+</details>
+
+---
+
+_****_
+
+Let's look at the pyproject.toml file to understand how the package is configured:
+
+---
+
+_****_
+
+Read file: pyproject.toml
+
+---
+
+_****_
+
+Let's also check the test_basic.py file to see how it's importing the module:
+
+---
+
+_****_
+
+Read file: tests/test_basic.py
+
+---
+
+_****_
+
+Now let's check the test_benchmark.py file:
+
+---
+
+_****_
+
+Read file: tests/test_benchmark.py
+
+---
+
+_****_
+
+I see the issue. The test_benchmark.py file is trying to import `jiter_pupy.jiter` but it's also adding the src directory to the Python path after the import. Let's fix the test_benchmark.py file to match the import style in test_basic.py:
+
+---
+
+_****_
+
+```diff
+  import sys
+  from pathlib import Path
+- 
+- import pytest
+- 
+- import jiter_pupy.jiter as jiter  # noqa: E402
+  
+  # Add the src directory to the Python path
+  sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
++ 
++ import pytest
++ import jiter_pupy as jiter
+  
+  
+```
+
+---
+
+_****_
+
+Now let's run the tests again:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest -xvs tests/test_basic.py
+```
+
+```
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_benchmark/logger.py:39: PytestBenchmarkWarnin
+g: Benchmarks are automatically disabled because xdist plugin is a
+ctive.Benchmarks cannot be performed reliably in a parallelized en
+vironment.
+  warner(PytestBenchmarkWarning(text))
+Test session starts (platform: darwin, Python 3.12.8, pytest 8.3.4
+, pytest-sugar 1.0.0)
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleData
+base(PosixPath('/Users/adam/Developer/vcs/github.twardoch/pub/jite
+r_pupy/.hypothesis/examples'))
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=Fal
+se min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precisi
+on=10 warmup=False warmup_iterations=100000)
+Fugue tests will be initialized with options:
+rootdir: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy
+configfile: pyproject.toml
+plugins: recording-0.13.2, jaxtyping-0.2.37, cov-6.0.0, flake8-1.3
+.0, subtests-0.14.1, instafail-0.5.0, docker-3.1.2, jaraco.mongodb
+-12.1.2, enabler-3.3.0, ignore-flaky-2.2.1, integration-0.2.3, sug
+ar-1.0.0, langchain-0.1.0, env-1.1.5, socket-0.7.0, flaky-3.8.1, t
+ime-machine-2.16.0, shutil-1.8.1, asyncio-0.25.3, checkdocs-2.13.0
+, hypothesis-6.124.7, black-0.6.0, anyio-4.8.0, darkgraylib-1.2.1,
+ ruff-0.4.1, benchmark-5.1.0, pmxbot-1122.17.0, virtualenv-1.8.1,
+jaraco.vcs-2.4.0, perf-0.15.0, rerunfailures-15.0, fugue-0.9.2.dev
+1, timeout-2.3.1, mock-3.14.0, typeguard-4.4.2, logfire-3.4.0, das
+h-2.18.2, xdist-3.6.1, depends-1.0.1, requests-mock-1.12.1, syrupy
+-4.8.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+initialized: 8/8 workers/Library/Frameworks/Python.framework/Versi
+ons/3.12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207
+: PytestDeprecationWarning: The configuration option "asyncio_defa
+ult_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 2/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 3/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 4/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 5/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 6/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 7/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+8 workers [5 items]    
+scheduling tests via LoadScheduling
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_basic.py::test_basic_parsing ✓          20% ██
+
+[gw3] PASSED tests/test_basic.py 
+ tests/test_basic.py::test_version ✓                40% ████
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_basic.py:: ✓                            60% ██████
+
+ tests/test_basic.py:: ✓✓                           80% ████████
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_basic.py::Black format check ✓         100% ██████████
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+Name                            Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------
+src/jiter_pupy/__init__.py          2      0      0      0   100%
+src/jiter_pupy/__version__.py       9      9      0      0     0%
+src/jiter_pupy/jiter.py           190    138    112      9    20%
+-----------------------------------------------------------------
+TOTAL                             201    147    112      9    20%
+
+
+====================== slowest 10 durations ======================
+0.99s call     tests/test_basic.py::black
+0.21s setup    tests/test_basic.py::black
+0.05s call     tests/test_basic.py::ruff::format
+0.05s call     tests/test_basic.py::ruff
+0.01s setup    tests/test_basic.py::test_version
+0.01s setup    tests/test_basic.py::test_basic_parsing
+0.00s call     tests/test_basic.py::test_basic_parsing
+0.00s setup    tests/test_basic.py::ruff::format
+0.00s setup    tests/test_basic.py::ruff
+0.00s teardown tests/test_basic.py::test_basic_parsing
+
+Results (15.64s):
+       5 passed
+
+```
+
+---
+
+_****_
+
+Great! The basic tests are passing. Now let's run the benchmark tests:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest -xvs tests/test_benchmark.py
+```
+
+```
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_benchmark/logger.py:39: PytestBenchmarkWarnin
+g: Benchmarks are automatically disabled because xdist plugin is a
+ctive.Benchmarks cannot be performed reliably in a parallelized en
+vironment.
+  warner(PytestBenchmarkWarning(text))
+Test session starts (platform: darwin, Python 3.12.8, pytest 8.3.4
+, pytest-sugar 1.0.0)
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleData
+base(PosixPath('/Users/adam/Developer/vcs/github.twardoch/pub/jite
+r_pupy/.hypothesis/examples'))
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=Fal
+se min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precisi
+on=10 warmup=False warmup_iterations=100000)
+Fugue tests will be initialized with options:
+rootdir: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy
+configfile: pyproject.toml
+plugins: recording-0.13.2, jaxtyping-0.2.37, cov-6.0.0, flake8-1.3
+.0, subtests-0.14.1, instafail-0.5.0, docker-3.1.2, jaraco.mongodb
+-12.1.2, enabler-3.3.0, ignore-flaky-2.2.1, integration-0.2.3, sug
+ar-1.0.0, langchain-0.1.0, env-1.1.5, socket-0.7.0, flaky-3.8.1, t
+ime-machine-2.16.0, shutil-1.8.1, asyncio-0.25.3, checkdocs-2.13.0
+, hypothesis-6.124.7, black-0.6.0, anyio-4.8.0, darkgraylib-1.2.1,
+ ruff-0.4.1, benchmark-5.1.0, pmxbot-1122.17.0, virtualenv-1.8.1,
+jaraco.vcs-2.4.0, perf-0.15.0, rerunfailures-15.0, fugue-0.9.2.dev
+1, timeout-2.3.1, mock-3.14.0, typeguard-4.4.2, logfire-3.4.0, das
+h-2.18.2, xdist-3.6.1, depends-1.0.1, requests-mock-1.12.1, syrupy
+-4.8.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+initialized: 8/8 workers/Library/Frameworks/Python.framework/Versi
+ons/3.12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207
+: PytestDeprecationWarning: The configuration option "asyncio_defa
+ult_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 2/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 3/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 4/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 5/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 6/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 7/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+8 workers [17 items]   
+scheduling tests via LoadScheduling
+
+ tests/test_benchmark.py:: ✓                         6% ▋
+
+ tests/test_benchmark.py:: ✓✓                       12% █▎
+
+[gw0] PASSED tests/test_benchmark.py 
+ tests/test_benchmark.py::test_benchmark_jiter_lossless_float_mode
+ ✓18% █▊        /Library/Frameworks/Python.framework/Versions/3.12
+/lib/python3.12/site-packages/coverage/inorout.py:508: CoverageWar
+ning: Module tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_float_mode ✓24% ██▍
+       ASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_keys_cache ✓29% ██▉
+       ASSED tests/test_benchmark.py
+ tests/test_benchmark.py::Black format check ✓      35% ███▌
+
+[gw1] PASSED tests/test_benchmark.py 
+ tests/test_benchmark.py::test_benchmark_jiter_simple ✓41% ████▎
+
+   /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.
+12/site-packages/coverage/inorout.py:508: CoverageWarning: Module
+tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_decimal_mode ✓47% █
+███▊     /Library/Frameworks/Python.framework/Versions/3.12/lib/py
+thon3.12/site-packages/coverage/inorout.py:508: CoverageWarning: M
+odule tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_no_cache ✓53% █████
+▍    /Library/Frameworks/Python.framework/Versions/3.12/lib/python
+3.12/site-packages/coverage/inorout.py:508: CoverageWarning: Modul
+e tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_stdlib_large_array ✓59% █
+████▉    SED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_stdlib_simple ✓65% ██████
+▌   ] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_all_cache ✓71% ████
+███▏  /Library/Frameworks/Python.framework/Versions/3.12/lib/pytho
+n3.12/site-packages/coverage/inorout.py:508: CoverageWarning: Modu
+le tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_stdlib_nested ✓76% ██████
+█▋  ] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_array ✓82% ████████
+▎ /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.1
+2/site-packages/coverage/inorout.py:508: CoverageWarning: Module t
+ests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_stdlib_array ✓88% ███████
+█▉ 3] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_nested ✓94% ███████
+██▌/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.
+12/site-packages/coverage/inorout.py:508: CoverageWarning: Module
+tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_large_array ✓100% █
+█████████/Library/Frameworks/Python.framework/Versions/3.12/lib/py
+thon3.12/site-packages/coverage/inorout.py:508: CoverageWarning: M
+odule tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+Name                            Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------
+src/jiter_pupy/__init__.py          2      0      0      0   100%
+src/jiter_pupy/__version__.py       9      9      0      0     0%
+src/jiter_pupy/jiter.py           190    133    112      8    23%
+-----------------------------------------------------------------
+TOTAL                             201    142    112      8    23%
+
+
+====================== slowest 10 durations ======================
+5.84s call     tests/test_benchmark.py::test_benchmark_stdlib_arra
+y
+5.62s call     tests/test_benchmark.py::test_benchmark_stdlib_nest
+ed
+5.01s call     tests/test_benchmark.py::test_benchmark_stdlib_simp
+le
+5.00s call     tests/test_benchmark.py::test_benchmark_stdlib_larg
+e_array
+1.99s call     tests/test_benchmark.py::test_benchmark_jiter_no_ca
+che
+1.90s call     tests/test_benchmark.py::test_benchmark_jiter_decim
+al_mode
+1.61s call     tests/test_benchmark.py::test_benchmark_jiter_keys_
+cache
+1.60s call     tests/test_benchmark.py::test_benchmark_jiter_float
+_mode
+1.52s call     tests/test_benchmark.py::black
+1.45s call     tests/test_benchmark.py::test_benchmark_jiter_simpl
+e
+
+Results (20.04s):
+      17 passed
+
+```
+
+---
+
+_****_
+
+Great! The benchmark tests are now passing. Let's run the benchmark tests with the actual benchmarking enabled by disabling the xdist plugin:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest tests/test_benchmark.py --benchmark-only
+```
+
+```
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_benchmark/logger.py:39: PytestBenchmarkWarnin
+g: Benchmarks are automatically disabled because xdist plugin is a
+ctive.Benchmarks cannot be performed reliably in a parallelized en
+vironment.
+  warner(PytestBenchmarkWarning(text))
+ERROR: Can't have both --benchmark-only and --benchmark-disable op
+tions. Note that --benchmark-disable is automatically activated if
+ xdist is on or you're missing the statistics dependency.
+
+
+```
+
+---
+
+_****_
+
+Let's try running the benchmark tests with the `-k` flag to disable xdist:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest tests/test_benchmark.py -k "benchmark" -v
+```
+
+```
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_benchmark/logger.py:39: PytestBenchmarkWarnin
+g: Benchmarks are automatically disabled because xdist plugin is a
+ctive.Benchmarks cannot be performed reliably in a parallelized en
+vironment.
+  warner(PytestBenchmarkWarning(text))
+Test session starts (platform: darwin, Python 3.12.8, pytest 8.3.4
+, pytest-sugar 1.0.0)
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleData
+base(PosixPath('/Users/adam/Developer/vcs/github.twardoch/pub/jite
+r_pupy/.hypothesis/examples'))
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=Fal
+se min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precisi
+on=10 warmup=False warmup_iterations=100000)
+Fugue tests will be initialized with options:
+rootdir: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy
+configfile: pyproject.toml
+plugins: recording-0.13.2, jaxtyping-0.2.37, cov-6.0.0, flake8-1.3
+.0, subtests-0.14.1, instafail-0.5.0, docker-3.1.2, jaraco.mongodb
+-12.1.2, enabler-3.3.0, ignore-flaky-2.2.1, integration-0.2.3, sug
+ar-1.0.0, langchain-0.1.0, env-1.1.5, socket-0.7.0, flaky-3.8.1, t
+ime-machine-2.16.0, shutil-1.8.1, asyncio-0.25.3, checkdocs-2.13.0
+, hypothesis-6.124.7, black-0.6.0, anyio-4.8.0, darkgraylib-1.2.1,
+ ruff-0.4.1, benchmark-5.1.0, pmxbot-1122.17.0, virtualenv-1.8.1,
+jaraco.vcs-2.4.0, perf-0.15.0, rerunfailures-15.0, fugue-0.9.2.dev
+1, timeout-2.3.1, mock-3.14.0, typeguard-4.4.2, logfire-3.4.0, das
+h-2.18.2, xdist-3.6.1, depends-1.0.1, requests-mock-1.12.1, syrupy
+-4.8.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+initialized: 8/8 workers/Library/Frameworks/Python.framework/Versi
+ons/3.12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207
+: PytestDeprecationWarning: The configuration option "asyncio_defa
+ult_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 3/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 4/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 5/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 6/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+ready: 7/8 workers/Library/Frameworks/Python.framework/Versions/3.
+12/lib/python3.12/site-packages/pytest_asyncio/plugin.py:207: Pyte
+stDeprecationWarning: The configuration option "asyncio_default_fi
+xture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+8 workers [17 items]   
+scheduling tests via LoadScheduling
+
+ tests/test_benchmark.py:: ✓                         6% ▋
+
+ tests/test_benchmark.py:: ✓✓                       12% █▎
+
+[gw2] PASSED tests/test_benchmark.py 
+ tests/test_benchmark.py::test_benchmark_jiter_lossless_float_mode
+ ✓18% █▊        /Library/Frameworks/Python.framework/Versions/3.12
+/lib/python3.12/site-packages/coverage/inorout.py:508: CoverageWar
+ning: Module tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::Black format check ✓      24% ██▍
+
+[gw0] PASSED tests/test_benchmark.py 
+ tests/test_benchmark.py::test_benchmark_jiter_float_mode ✓29% ██▉
+       ASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_keys_cache ✓35% ███
+▌      ASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_simple ✓41% ████▎
+
+   /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.
+12/site-packages/coverage/inorout.py:508: CoverageWarning: Module
+tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_decimal_mode ✓47% █
+███▊     /Library/Frameworks/Python.framework/Versions/3.12/lib/py
+thon3.12/site-packages/coverage/inorout.py:508: CoverageWarning: M
+odule tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_no_cache ✓53% █████
+▍    /Library/Frameworks/Python.framework/Versions/3.12/lib/python
+3.12/site-packages/coverage/inorout.py:508: CoverageWarning: Modul
+e tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_stdlib_simple ✓59% █████▉
+    ] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_stdlib_large_array ✓65% █
+█████▌   SED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_array ✓71% ███████▏
+  /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.1
+2/site-packages/coverage/inorout.py:508: CoverageWarning: Module t
+ests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_all_cache ✓76% ████
+███▋  /Library/Frameworks/Python.framework/Versions/3.12/lib/pytho
+n3.12/site-packages/coverage/inorout.py:508: CoverageWarning: Modu
+le tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_stdlib_nested ✓82% ██████
+██▎ ] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_stdlib_array ✓88% ███████
+█▉ 3] PASSED tests/test_benchmark.py
+ tests/test_benchmark.py::test_benchmark_jiter_large_array ✓94% ██
+███████▌/Library/Frameworks/Python.framework/Versions/3.12/lib/pyt
+hon3.12/site-packages/coverage/inorout.py:508: CoverageWarning: Mo
+dule tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+ tests/test_benchmark.py::test_benchmark_jiter_nested ✓100% ██████
+████/Library/Frameworks/Python.framework/Versions/3.12/lib/python3
+.12/site-packages/coverage/inorout.py:508: CoverageWarning: Module
+ tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+Name                            Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------
+src/jiter_pupy/__init__.py          2      0      0      0   100%
+src/jiter_pupy/__version__.py       9      9      0      0     0%
+src/jiter_pupy/jiter.py           190    133    112      8    23%
+-----------------------------------------------------------------
+TOTAL                             201    142    112      8    23%
+
+
+====================== slowest 10 durations ======================
+6.18s call     tests/test_benchmark.py::test_benchmark_stdlib_arra
+y
+5.93s call     tests/test_benchmark.py::test_benchmark_stdlib_nest
+ed
+5.07s call     tests/test_benchmark.py::test_benchmark_stdlib_larg
+e_array
+4.72s call     tests/test_benchmark.py::test_benchmark_stdlib_simp
+le
+1.97s call     tests/test_benchmark.py::test_benchmark_jiter_no_ca
+che
+1.90s call     tests/test_benchmark.py::test_benchmark_jiter_decim
+al_mode
+1.78s call     tests/test_benchmark.py::test_benchmark_jiter_float
+_mode
+1.78s call     tests/test_benchmark.py::test_benchmark_jiter_keys_
+cache
+1.50s call     tests/test_benchmark.py::test_benchmark_jiter_lossl
+ess_float_mode
+1.49s call     tests/test_benchmark.py::black
+
+Results (21.54s):
+      17 passed
+
+```
+
+---
+
+_****_
+
+Let's try running the benchmark tests with the `--no-xdist` flag to disable the xdist plugin:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest tests/test_benchmark.py --no-xdist -v
+```
+
+```
+ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [.
+..]
+__main__.py: error: unrecognized arguments: --no-xdist
+  inifile: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pup
+y/pyproject.toml
+  rootdir: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pup
+y
+
+
+```
+
+---
+
+_****_
+
+Let's try running the benchmark tests with the `-p no:xdist` flag to disable the xdist plugin:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest tests/test_benchmark.py -p no:xdist -v
+```
+
+```
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarni
+ng: The configuration option "asyncio_default_fixture_loop_scope"
+is unset.
+The event loop scope for asynchronous fixtures will default to the
+ fixture caching scope. Future versions of pytest-asyncio will def
+ault the loop scope for asynchronous fixtures to function scope. S
+et the default fixture loop scope explicitly in order to avoid une
+xpected behavior in the future. Valid fixture loop scopes are: "fu
+nction", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCO
+PE_UNSET))
+Test session starts (platform: darwin, Python 3.12.8, pytest 8.3.4
+, pytest-sugar 1.0.0)
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleData
+base(PosixPath('/Users/adam/Developer/vcs/github.twardoch/pub/jite
+r_pupy/.hypothesis/examples'))
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=Fal
+se min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precisi
+on=10 warmup=False warmup_iterations=100000)
+Fugue tests will be initialized with options:
+rootdir: /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy
+configfile: pyproject.toml
+plugins: recording-0.13.2, jaxtyping-0.2.37, cov-6.0.0, flake8-1.3
+.0, subtests-0.14.1, instafail-0.5.0, docker-3.1.2, jaraco.mongodb
+-12.1.2, enabler-3.3.0, ignore-flaky-2.2.1, integration-0.2.3, sug
+ar-1.0.0, langchain-0.1.0, env-1.1.5, socket-0.7.0, flaky-3.8.1, t
+ime-machine-2.16.0, shutil-1.8.1, asyncio-0.25.3, checkdocs-2.13.0
+, hypothesis-6.124.7, black-0.6.0, anyio-4.8.0, darkgraylib-1.2.1,
+ ruff-0.4.1, benchmark-5.1.0, pmxbot-1122.17.0, virtualenv-1.8.1,
+jaraco.vcs-2.4.0, perf-0.15.0, rerunfailures-15.0, fugue-0.9.2.dev
+1, timeout-2.3.1, mock-3.14.0, typeguard-4.4.2, logfire-3.4.0, das
+h-2.18.2, xdist-3.6.1, depends-1.0.1, requests-mock-1.12.1, syrupy
+-4.8.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+collected 17 items                                               
+
+ tests/test_benchmark.py:: ✓✓                       12% █▎
+
+ tests/test_benchmark.py::Black format check ✓      18% █▊
+
+ tests/test_benchmark.py::test_benchmark_jiter_simple ✓24% ██▍
+
+
+ tests/test_benchmark.py::test_benchmark_stdlib_simple ✓29% ██▉
+
+
+ tests/test_benchmark.py::test_benchmark_jiter_array ✓35% ███▌
+
+
+ tests/test_benchmark.py::test_benchmark_stdlib_array ✓41% ████▎
+
+
+ tests/test_benchmark.py::test_benchmark_jiter_nested ✓47% ████▊
+
+
+ tests/test_benchmark.py::test_benchmark_stdlib_nested ✓53% █████▍
+
+ tests/test_benchmark.py::test_benchmark_jiter_large_array ✓59% ██
+███▉
+ tests/test_benchmark.py::test_benchmark_stdlib_large_array ✓65% █
+█████▌
+ tests/test_benchmark.py::test_benchmark_jiter_all_cache ✓71% ████
+███▏
+ tests/test_benchmark.py::test_benchmark_jiter_keys_cache ✓76% ███
+████▋
+ tests/test_benchmark.py::test_benchmark_jiter_no_cache ✓82% █████
+███▎
+ tests/test_benchmark.py::test_benchmark_jiter_float_mode ✓88% ███
+█████▉
+ tests/test_benchmark.py::test_benchmark_jiter_decimal_mode ✓94% █
+████████▌
+ tests/test_benchmark.py::test_benchmark_jiter_lossless_float_mode
+ ✓100% ██████████/Library/Frameworks/Python.framework/Versions/3.1
+2/lib/python3.12/site-packages/coverage/inorout.py:508: CoverageWa
+rning: Module tests was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+Name                            Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------
+src/jiter_pupy/__init__.py          2      0      0      0   100%
+src/jiter_pupy/__version__.py       9      9      0      0     0%
+src/jiter_pupy/jiter.py           190    133    112      8    23%
+-----------------------------------------------------------------
+TOTAL                             201    142    112      8    23%
+
+
+------------------------------------------------------------------
+------------------- benchmark 'array': 2 tests -------------------
+------------------------------------------------------------------
+Name (time in us)                   Min                 Max
+
+        Mean             StdDev             Median               I
+QR            Outliers  OPS (Kops/s)            Rounds  Iterations
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+test_benchmark_stdlib_array      3.5020 (1.0)       78.8220 (1.0) 
+      4.9175 (1.0)       2.2447 (1.0)       4.5260 (1.0)      0.41
+70 (1.0)     1225;3220      203.3545 (1.0)       44544           1
+test_benchmark_jiter_array      11.9170 (3.40)     332.6110 (4.22)
+     17.1587 (3.49)     14.4491 (6.44)     14.1600 (3.13)     1.45
+32 (3.49)     883;2015       58.2793 (0.29)      19297           1
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------ benchmark 'cache_modes': 3 tests --------------
+------------------------------------------------------------------
+----
+Name (time in us)                       Min                 Max
+
+            Mean             StdDev             Median
+   IQR            Outliers  OPS (Kops/s)            Rounds  Iterat
+ions
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+----
+test_benchmark_jiter_no_cache       11.1370 (1.0)      185.4080 (1
+.0)      17.1539 (1.0)      12.9920 (1.0)      14.9260 (1.00)
+1.2982 (1.0)      583;1800       58.2957 (1.0)       19817
+   1
+test_benchmark_jiter_keys_cache     11.1780 (1.00)     216.7210 (1
+.17)     17.3074 (1.01)     13.3047 (1.02)     14.8930 (1.0)
+1.3980 (1.08)     619;2383       57.7789 (0.99)      20011
+   1
+test_benchmark_jiter_all_cache      12.8430 (1.15)     383.6080 (2
+.07)     17.9071 (1.04)     14.8276 (1.14)     15.1490 (1.02)
+1.5690 (1.21)     544;1547       55.8438 (0.96)      16350
+   1
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+----
+
+------------------------------------------------------------------
+------------------------ benchmark 'float_modes': 3 tests --------
+------------------------------------------------------------------
+---------------
+Name (time in us)                                Min
+
+     Max               Mean             StdDev             Median
+              IQR            Outliers  OPS (Kops/s)            Rou
+nds  Iterations
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+---------------
+test_benchmark_jiter_float_mode              10.1540 (1.0)      6,
+405.9840 (23.81)    16.2208 (1.03)     51.9903 (3.92)     13.1840
+(1.0)      1.2220 (1.09)     421;2067       61.6491 (0.97)      22
+126           1
+test_benchmark_jiter_lossless_float_mode     10.2460 (1.01)
+
+270.0120 (1.00)     16.9475 (1.08)     15.7609 (1.19)     13.9640
+(1.06)     1.3060 (1.17)     806;2222       59.0058 (0.93)      21
+274           1
+test_benchmark_jiter_decimal_mode            10.4590 (1.03)
+
+268.9990 (1.0)      15.6936 (1.0)      13.2763 (1.0)      13.4040
+(1.02)     1.1200 (1.0)      648;1920       63.7201 (1.0)       22
+205           1
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+---------------
+
+------------------------------------------------------------------
+------------------- benchmark 'large_array': 2 tests -------------
+------------------------------------------------------------------
+------
+Name (time in us)                         Min                 Max 
+              Mean             StdDev             Median
+     IQR            Outliers  OPS (Kops/s)            Rounds  Iter
+ations
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+------
+test_benchmark_stdlib_large_array      8.9290 (1.0)      103.1370 
+(1.0)      11.4970 (1.0)       3.1378 (1.0)      10.9140 (1.0)
+  0.6050 (1.0)     1017;3225       86.9790 (1.0)       33186
+     1
+test_benchmark_jiter_large_array      31.4680 (3.52)     662.9240 
+(6.43)     37.7403 (3.28)     17.8807 (5.70)     34.1680 (3.13)
+  1.9905 (3.29)     486;1326       26.4969 (0.30)      11713
+     1
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+------
+
+------------------------------------------------------------------
+-------------------- benchmark 'nested': 2 tests -----------------
+------------------------------------------------------------------
+----
+Name (time in us)                    Min                    Max
+
+            Mean             StdDev             Median
+   IQR            Outliers  OPS (Kops/s)            Rounds  Iterat
+ions
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+----
+test_benchmark_stdlib_nested      3.3270 (1.0)      15,256.9880 (3
+3.17)     5.5468 (1.0)      70.8360 (5.60)      4.5150 (1.0)
+0.7320 (1.0)       14;3737      180.2854 (1.0)       46465
+   1
+test_benchmark_jiter_nested      10.5370 (3.17)        459.9510 (1
+.0)      16.2458 (2.93)     12.6419 (1.0)      14.3820 (3.19)
+0.9390 (1.28)     407;1333       61.5543 (0.34)      17878
+   1
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+----
+
+------------------------------------------------------------------
+------------------- benchmark 'simple': 2 tests ------------------
+------------------------------------------------------------------
+-
+Name (time in us)                    Min                 Max
+
+         Mean             StdDev             Median
+IQR            Outliers  OPS (Kops/s)            Rounds  Iteration
+s
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+-
+test_benchmark_stdlib_simple      3.2890 (1.0)       79.2030 (1.0)
+       4.6221 (1.0)       2.5692 (1.0)       4.1700 (1.0)      0.4
+680 (1.0)      631;1979      216.3541 (1.0)       24676
+1
+test_benchmark_jiter_simple      12.1260 (3.69)     821.4690 (10.3
+7)    16.9147 (3.66)     20.8972 (8.13)     13.8480 (3.32)     1.3
+248 (2.83)       80;280       59.1201 (0.27)       2483
+1
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+-
+
+Legend:
+  Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile
+ Range) from 1st Quartile and 3rd Quartile.
+  OPS: Operations Per Second, computed as 1 / Mean
+====================== slowest 10 durations ======================
+5.61s call     tests/test_benchmark.py::test_benchmark_stdlib_nest
+ed
+5.13s call     tests/test_benchmark.py::test_benchmark_stdlib_arra
+y
+4.09s call     tests/test_benchmark.py::test_benchmark_stdlib_larg
+e_array
+2.90s call     tests/test_benchmark.py::test_benchmark_jiter_float
+_mode
+2.85s call     tests/test_benchmark.py::test_benchmark_stdlib_simp
+le
+2.85s call     tests/test_benchmark.py::test_benchmark_jiter_decim
+al_mode
+2.76s call     tests/test_benchmark.py::test_benchmark_jiter_lossl
+ess_float_mode
+2.62s call     tests/test_benchmark.py::test_benchmark_jiter_keys_
+cache
+2.58s call     tests/test_benchmark.py::test_benchmark_jiter_no_ca
+che
+2.54s call     tests/test_benchmark.py::test_benchmark_jiter_array
+
+Results (44.35s):
+      17 passed
+
+```
+
+---
+
+_****_
+
+Great! We've successfully run the benchmark tests with the xdist plugin disabled, and we can see the benchmark results. The benchmark results show that the standard library's `json.loads` function is generally faster than our `jiter_pupy` implementation, which is expected since our implementation is a pure Python implementation while the standard library's implementation is written in C.
+
+Let's run all the tests to make sure everything is working correctly:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && python -m pytest
+```
+
+```
+adam@Hamlet jiter_pupy % 
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    try:
+                        if exception is not None:
+                            teardown.throw(exception)  # type: ign
+ore[union-attr]
+                        else:
+                            teardown.send(result)  # type: ignore[
+union-attr]
+                        # Following is unreachable for a well beha
+ved hook wrapper.
+                        # Try to force finalizers otherwise postpo
+ned till GC action.
+                        # Note: close() may raise if generator han
+dles GeneratorExit.
+                        teardown.close()  # type: ignore[union-att
+r]
+                    except StopIteration as si:
+                        result = si.value
+                        exception = None
+                        continue
+                    except BaseException as e:
+                        exception = e
+                        continue
+                    _raise_wrapfail(teardown, "has second yield") 
+ # type: ignore[arg-type]
+    
+                if exception is not None:
+                    raise exception.with_traceback(exception.__tra
+ceback__)
+                else:
+                    return result
+    
+            # Slow path - need to support old-style wrappers.
+            else:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    outcome: Result[object | list[object]] = Resul
+t(
+                        results[0] if results else None, exception
+                    )
+                else:
+                    outcome = Result(results, exception)
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    if isinstance(teardown, tuple):
+                        try:
+                            teardown[0].send(outcome)
+                        except StopIteration:
+                            pass
+                        except BaseException as e:
+                            _warn_teardown_exception(hook_name, te
+ardown[1], e)
+                            raise
+                        else:
+                            _raise_wrapfail(teardown[0], "has seco
+nd yield")
+                    else:
+                        try:
+                            if outcome._exception is not None:
+>                               teardown.throw(outcome._exception)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:167:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @pytest.hookimpl(wrapper=True, tryfirst=True)
+    def pytest_runtest_call() -> Generator[None]:
+>       yield from unraisable_exception_runtest_hook()
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/unraisableexception.py:95:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def unraisable_exception_runtest_hook() -> Generator[None]:
+        with catch_unraisable_exception() as cm:
+            try:
+>               yield
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/unraisableexception.py:70:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffFormatItem ruff::format>}
+firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+                        res = hook_impl.function(*args)
+                        if res is not None:
+                            results.append(res)
+                            if firstresult:  # halt further impl c
+alls
+                                break
+            except BaseException as exc:
+                exception = exc
+        finally:
+            # Fast path - only new-style wrappers, no Result.
+            if only_new_style_wrappers:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    result = results[0] if results else None
+                else:
+                    result = results
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    try:
+                        if exception is not None:
+                            teardown.throw(exception)  # type: ign
+ore[union-attr]
+                        else:
+                            teardown.send(result)  # type: ignore[
+union-attr]
+                        # Following is unreachable for a well beha
+ved hook wrapper.
+                        # Try to force finalizers otherwise postpo
+ned till GC action.
+                        # Note: close() may raise if generator han
+dles GeneratorExit.
+                        teardown.close()  # type: ignore[union-att
+r]
+                    except StopIteration as si:
+                        result = si.value
+                        exception = None
+                        continue
+                    except BaseException as e:
+                        exception = e
+                        continue
+                    _raise_wrapfail(teardown, "has second yield") 
+ # type: ignore[arg-type]
+    
+                if exception is not None:
+                    raise exception.with_traceback(exception.__tra
+ceback__)
+                else:
+                    return result
+    
+            # Slow path - need to support old-style wrappers.
+            else:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    outcome: Result[object | list[object]] = Resul
+t(
+                        results[0] if results else None, exception
+                    )
+                else:
+                    outcome = Result(results, exception)
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    if isinstance(teardown, tuple):
+                        try:
+                            teardown[0].send(outcome)
+                        except StopIteration:
+                            pass
+                        except BaseException as e:
+                            _warn_teardown_exception(hook_name, te
+ardown[1], e)
+                            raise
+                        else:
+                            _raise_wrapfail(teardown[0], "has seco
+nd yield")
+                    else:
+                        try:
+                            if outcome._exception is not None:
+>                               teardown.throw(outcome._exception)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:167:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_pytest.logging.LoggingPlugin object at 0x12c1cf0e0>
+item = <RuffFormatItem ruff::format>
+
+    @hookimpl(wrapper=True)
+    def pytest_runtest_call(self, item: nodes.Item) -> Generator[N
+one]:
+        self.log_cli_handler.set_when("call")
+    
+>       yield from self._runtest_for(item, "call")
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/logging.py:846:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_pytest.logging.LoggingPlugin object at 0x12c1cf0e0>
+item = <RuffFormatItem ruff::format>, when = 'call'
+
+    def _runtest_for(self, item: nodes.Item, when: str) -> Generat
+or[None]:
+        """Implement the internals of the pytest_runtest_xxx() hoo
+ks."""
+        with catching_logs(
+            self.caplog_handler,
+            level=self.log_level,
+        ) as caplog_handler, catching_logs(
+            self.report_handler,
+            level=self.log_level,
+        ) as report_handler:
+            caplog_handler.reset()
+            report_handler.reset()
+            item.stash[caplog_records_key][when] = caplog_handler.
+records
+            item.stash[caplog_handler_key] = caplog_handler
+    
+            try:
+>               yield
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/logging.py:829:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffFormatItem ruff::format>}
+firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+                        res = hook_impl.function(*args)
+                        if res is not None:
+                            results.append(res)
+                            if firstresult:  # halt further impl c
+alls
+                                break
+            except BaseException as exc:
+                exception = exc
+        finally:
+            # Fast path - only new-style wrappers, no Result.
+            if only_new_style_wrappers:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    result = results[0] if results else None
+                else:
+                    result = results
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    try:
+                        if exception is not None:
+                            teardown.throw(exception)  # type: ign
+ore[union-attr]
+                        else:
+                            teardown.send(result)  # type: ignore[
+union-attr]
+                        # Following is unreachable for a well beha
+ved hook wrapper.
+                        # Try to force finalizers otherwise postpo
+ned till GC action.
+                        # Note: close() may raise if generator han
+dles GeneratorExit.
+                        teardown.close()  # type: ignore[union-att
+r]
+                    except StopIteration as si:
+                        result = si.value
+                        exception = None
+                        continue
+                    except BaseException as e:
+                        exception = e
+                        continue
+                    _raise_wrapfail(teardown, "has second yield") 
+ # type: ignore[arg-type]
+    
+                if exception is not None:
+                    raise exception.with_traceback(exception.__tra
+ceback__)
+                else:
+                    return result
+    
+            # Slow path - need to support old-style wrappers.
+            else:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    outcome: Result[object | list[object]] = Resul
+t(
+                        results[0] if results else None, exception
+                    )
+                else:
+                    outcome = Result(results, exception)
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    if isinstance(teardown, tuple):
+                        try:
+                            teardown[0].send(outcome)
+                        except StopIteration:
+                            pass
+                        except BaseException as e:
+                            _warn_teardown_exception(hook_name, te
+ardown[1], e)
+                            raise
+                        else:
+                            _raise_wrapfail(teardown[0], "has seco
+nd yield")
+                    else:
+                        try:
+                            if outcome._exception is not None:
+>                               teardown.throw(outcome._exception)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:167:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <CaptureManager _method='fd' _global_capturing=<MultiCaptur
+e out=<FDCapture 1 oldfd=7 _state='suspended' tmpfile=<_io....xtIO
+Wrapper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspe
+nded' _in_suspended=False> _capture_fixture=None>
+item = <RuffFormatItem ruff::format>
+
+    @hookimpl(wrapper=True)
+    def pytest_runtest_call(self, item: Item) -> Generator[None]:
+        with self.item_capture("call", item):
+>           return (yield)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/capture.py:880:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffFormatItem ruff::format>}
+firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+                        res = hook_impl.function(*args)
+                        if res is not None:
+                            results.append(res)
+                            if firstresult:  # halt further impl c
+alls
+                                break
+            except BaseException as exc:
+                exception = exc
+        finally:
+            # Fast path - only new-style wrappers, no Result.
+            if only_new_style_wrappers:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    result = results[0] if results else None
+                else:
+                    result = results
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    try:
+                        if exception is not None:
+                            teardown.throw(exception)  # type: ign
+ore[union-attr]
+                        else:
+                            teardown.send(result)  # type: ignore[
+union-attr]
+                        # Following is unreachable for a well beha
+ved hook wrapper.
+                        # Try to force finalizers otherwise postpo
+ned till GC action.
+                        # Note: close() may raise if generator han
+dles GeneratorExit.
+                        teardown.close()  # type: ignore[union-att
+r]
+                    except StopIteration as si:
+                        result = si.value
+                        exception = None
+                        continue
+                    except BaseException as e:
+                        exception = e
+                        continue
+                    _raise_wrapfail(teardown, "has second yield") 
+ # type: ignore[arg-type]
+    
+                if exception is not None:
+                    raise exception.with_traceback(exception.__tra
+ceback__)
+                else:
+                    return result
+    
+            # Slow path - need to support old-style wrappers.
+            else:
+                if firstresult:  # first result hooks return a sin
+gle value
+                    outcome: Result[object | list[object]] = Resul
+t(
+                        results[0] if results else None, exception
+                    )
+                else:
+                    outcome = Result(results, exception)
+    
+                # run all wrapper post-yield blocks
+                for teardown in reversed(teardowns):
+                    if isinstance(teardown, tuple):
+                        try:
+                            teardown[0].send(outcome)
+                        except StopIteration:
+                            pass
+                        except BaseException as e:
+                            _warn_teardown_exception(hook_name, te
+ardown[1], e)
+                            raise
+                        else:
+                            _raise_wrapfail(teardown[0], "has seco
+nd yield")
+                    else:
+                        try:
+                            if outcome._exception is not None:
+>                               teardown.throw(outcome._exception)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:167:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = <RuffFormatItem ruff::format>
+
+    @hookimpl(wrapper=True)
+    def pytest_runtest_call(item: Item) -> Generator[None]:
+        xfailed = item.stash.get(xfailed_key, None)
+        if xfailed is None:
+            item.stash[xfailed_key] = xfailed = evaluate_xfail_mar
+ks(item)
+    
+        if xfailed and not item.config.option.runxfail and not xfa
+iled.run:
+            xfail("[NOTRUN] " + xfailed.reason)
+    
+        try:
+>           return (yield)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/skipping.py:257:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+hook_name = 'pytest_runtest_call'
+hook_impls = [<HookImpl plugin_name='runner', plugin=<module '_pyt
+est.runner' from '/Library/Frameworks/Python.framework/Versions/3.
+..pper name='/dev/null' mode='r' encoding='utf-8'>> _state='suspen
+ded' _in_suspended=False> _capture_fixture=None>>, ...]
+caller_kwargs = {'item': <RuffFormatItem ruff::format>}
+firstresult = False
+
+    def _multicall(
+        hook_name: str,
+        hook_impls: Sequence[HookImpl],
+        caller_kwargs: Mapping[str, object],
+        firstresult: bool,
+    ) -> object | list[object]:
+        """Execute a call into multiple python functions/methods a
+nd return the
+        result(s).
+    
+        ``caller_kwargs`` comes from HookCaller.__call__().
+        """
+        __tracebackhide__ = True
+        results: list[object] = []
+        exception = None
+        only_new_style_wrappers = True
+        try:  # run impl and wrapper setup functions in a loop
+            teardowns: list[Teardown] = []
+            try:
+                for hook_impl in reversed(hook_impls):
+                    try:
+                        args = [caller_kwargs[argname] for argname
+ in hook_impl.argnames]
+                    except KeyError:
+                        for argname in hook_impl.argnames:
+                            if argname not in caller_kwargs:
+                                raise HookCallError(
+                                    f"hook call must provide argum
+ent {argname!r}"
+                                )
+    
+                    if hook_impl.hookwrapper:
+                        only_new_style_wrappers = False
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            wrapper_gen = cast(Generator[None, Res
+ult[object], None], res)
+                            next(wrapper_gen)  # first yield
+                            teardowns.append((wrapper_gen, hook_im
+pl))
+                        except StopIteration:
+                            _raise_wrapfail(wrapper_gen, "did not 
+yield")
+                    elif hook_impl.wrapper:
+                        try:
+                            # If this cast is not valid, a type er
+ror is raised below,
+                            # which is the desired response.
+                            res = hook_impl.function(*args)
+                            function_gen = cast(Generator[None, ob
+ject, object], res)
+                            next(function_gen)  # first yield
+                            teardowns.append(function_gen)
+                        except StopIteration:
+                            _raise_wrapfail(function_gen, "did not
+ yield")
+                    else:
+>                       res = hook_impl.function(*args)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pluggy/_callers.py:103:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = <RuffFormatItem ruff::format>
+
+    def pytest_runtest_call(item: Item) -> None:
+        _update_current_test_var(item, "call")
+        try:
+            del sys.last_type
+            del sys.last_value
+            del sys.last_traceback
+            if sys.version_info >= (3, 12, 0):
+                del sys.last_exc  # type:ignore[attr-defined]
+        except AttributeError:
+            pass
+        try:
+>           item.runtest()
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/_pytest/runner.py:174:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RuffFormatItem ruff::format>
+
+    def runtest(self):
+>       self.handler(path=self.fspath)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_ruff/__init__.py:141:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <RuffFormatItem ruff::format>
+path = local('/Users/adam/Developer/vcs/github.twardoch/pub/jiter_
+pupy/tests/test_package.py')
+
+    def handler(self, path):
+>       return format_file(path)
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_ruff/__init__.py:158:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = local('/Users/adam/Developer/vcs/github.twardoch/pub/jiter_
+pupy/tests/test_package.py')
+
+    def format_file(path):
+        ruff = find_ruff_bin()
+        command = [ruff, "format", path, "--quiet", "--check", "--
+force-exclude"]
+        with Popen(command) as child:
+            pass
+    
+        if child.returncode == 1:
+>           raise RuffError("File would be reformatted")
+E           pytest_ruff.RuffError: File would be reformatted
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/pytest_ruff/__init__.py:114: RuffError
+---------------------- Captured stdout call ----------------------
+Would reformat: tests/test_package.py
+
+
+ tests/test_package.py:: ⨯                          59% █████▉
+
+
+ tests/test_benchmark.py::test_benchmark_jiter_decimal_mode ✓62% █
+█████▎
+
+ tests/test_jiter.py:: ✓                            64% ██████▌
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+
+――――――――――――――――――――――― Black format check ―――――――――――――――――――――――
+[gw1] darwin -- Python 3.12.8 /usr/local/bin/python
+--- /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy/tests
+/test_package.py        2025-03-05 08:01:20.565204+00:00
++++ /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy/tests
+/test_package.py        2025-03-05 08:20:25.768293+00:00
+@@ -1,6 +1,8 @@
+ """Test suite for jiter_pupy."""
++
+ 
+ def test_version():
+     """Verify package exposes version."""
+     import jiter_pupy
++
+     assert jiter_pupy.__version__
+
+
+
+ tests/test_package.py::Black format check ⨯        67% ██████▋
+
+
+ tests/test_package.py::test_version ✓              69% ██████▉
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+ tests/test_benchmark.py::test_benchmark_jiter_lossless_float_mode
+ ✓72% ███████▎
+
+ tests/test_benchmark.py::test_benchmark_jiter_float_mode ✓74% ███
+████▌
+
+
+――――――――――――――――――――――― test_decimal_mode ――――――――――――――――――――――――
+[gw3] darwin -- Python 3.12.8 /usr/local/bin/python
+
+    def test_decimal_mode():
+        """Test decimal float mode."""
+        json_data = b'{"value": 123.456}'
+    
+        # Default float mode
+        parsed = jiter.from_json(json_data)
+        assert isinstance(parsed["value"], float)
+    
+        # Decimal mode
+        parsed = jiter.from_json(json_data, float_mode="decimal")
+>       assert isinstance(parsed["value"], Decimal)
+E       assert False
+E        +  where False = isinstance(123.456, Decimal)
+
+tests/test_jiter.py:94: AssertionError
+
+
+ tests/test_jiter.py::test_decimal_mode ⨯           77% ███████▊
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+ tests/test_benchmark.py::test_benchmark_stdlib_large_array ✓79% █
+██████▉
+
+ tests/test_jiter.py::test_basic_parsing ✓          82% ████████▎ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+
+――――――――――――――――――――――― Black format check ―――――――――――――――――――――――
+[gw2] darwin -- Python 3.12.8 /usr/local/bin/python
+--- /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy/tests
+/test_jiter.py  2025-03-05 08:10:28.520300+00:00
++++ /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy/tests
+/test_jiter.py  2025-03-05 08:20:27.185712+00:00
+@@ -1,6 +1,7 @@
+ """Test suite for jiter_pupy's jiter implementation."""
++
+ # this_file: tests/test_jiter.py
+ 
+ import math
+ from decimal import Decimal
+ 
+
+
+
+ tests/test_jiter.py::Black format check ⨯          85% ████████▌ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+ tests/test_benchmark.py::test_benchmark_stdlib_nested ✓87% ██████
+██▊
+
+
+―――――――――――――――――――――― test_string_caching ―――――――――――――――――――――――
+[gw6] darwin -- Python 3.12.8 /usr/local/bin/python
+
+    def test_string_caching():
+        """Test string caching functionality."""
+        jiter.cache_clear()
+        assert jiter.cache_usage() == 0
+    
+        # Parse with caching enabled
+        jiter.from_json(b'{"foo": "bar", "spam": "eggs"}', cache_m
+ode="all")
+>       assert jiter.cache_usage() > 0
+E       assert 0 > 0
+E        +  where 0 = <function cache_usage at 0x121e7b880>()
+E        +    where <function cache_usage at 0x121e7b880> = jiter.
+cache_usage
+
+tests/test_jiter.py:47: AssertionError
+
+
+ tests/test_jiter.py::test_string_caching ⨯         90% █████████ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+ tests/test_benchmark.py::test_benchmark_stdlib_array ✓92% ███████
+██▎
+
+
+―――――――――――――――――――――― test_duplicate_keys ―――――――――――――――――――――――
+[gw5] darwin -- Python 3.12.8 /usr/local/bin/python
+
+    def test_duplicate_keys():
+        """Test duplicate key detection."""
+        json_with_dupes = b'{"foo": 1, "foo": 2}'
+    
+        # Default behavior - last value wins
+        parsed = jiter.from_json(json_with_dupes)
+        assert parsed == {"foo": 2}
+    
+        # With duplicate detection enabled
+>       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_jiter.py:80: Failed
+
+
+ tests/test_jiter.py::test_duplicate_keys ⨯         95% █████████▌
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+ tests/test_benchmark.py::test_benchmark_stdlib_simple ✓97% ██████
+███▊
+
+ tests/test_jiter.py:: ✓                           100% ██████████
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/
+site-packages/coverage/inorout.py:508: CoverageWarning: Module tes
+ts was never imported. (module-not-imported)
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-
+imported")
+
+
+---------- coverage: platform darwin, python 3.12.8-final-0 ------
+----
+Name                            Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------
+src/jiter_pupy/__init__.py          2      0      0      0   100%
+src/jiter_pupy/__version__.py       9      9      0      0     0%
+src/jiter_pupy/jiter.py           190     85    112     18    49%
+-----------------------------------------------------------------
+TOTAL                             201     94    112     18    48%
+
+
+====================== slowest 10 durations ======================
+4.69s call     tests/test_benchmark.py::test_benchmark_stdlib_simp
+le
+4.05s call     tests/test_benchmark.py::test_benchmark_stdlib_arra
+y
+3.89s call     tests/test_benchmark.py::test_benchmark_stdlib_nest
+ed
+3.12s call     tests/test_benchmark.py::test_benchmark_stdlib_larg
+e_array
+2.59s call     tests/test_benchmark.py::test_benchmark_jiter_float
+_mode
+2.13s call     tests/test_benchmark.py::test_benchmark_jiter_lossl
+ess_float_mode
+2.09s call     tests/test_benchmark.py::test_benchmark_jiter_decim
+al_mode
+1.73s call     tests/test_benchmark.py::test_benchmark_jiter_array
+1.70s call     tests/test_benchmark.py::test_benchmark_jiter_no_ca
+che
+1.65s call     tests/test_benchmark.py::test_benchmark_jiter_neste
+d
+==================== short test summary info =====================
+FAILED tests/test_jiter.py::test_parse_special_values - TypeError:
+ must be real number, not NoneType
+FAILED tests/test_jiter.py::test_disallow_special_values - Failed:
+ DID NOT RAISE <class 'ValueError'>
+FAILED tests/test_jiter.py::test_partial_mode - ValueError: Expect
+ing ',' delimiter at line 1 column 14
+FAILED tests/test_jiter.py::test_lossless_float - AssertionError: 
+assert False
+FAILED tests/test_package.py::ruff::format - pytest_ruff.RuffError
+: File would be reformatted
+FAILED tests/test_package.py::black
+FAILED tests/test_jiter.py::test_decimal_mode - assert False
+FAILED tests/test_jiter.py::black
+FAILED tests/test_jiter.py::test_string_caching - assert 0 > 0
+FAILED tests/test_jiter.py::test_duplicate_keys - Failed: DID NOT 
+RAISE <class 'ValueError'>
+
+Results (19.60s):
+      28 passed
+      10 failed
+         - tests/test_jiter.py:18 test_parse_special_values
+         - tests/test_jiter.py:34 test_disallow_special_values
+         - tests/test_jiter.py:54 test_partial_mode
+         - tests/test_jiter.py:98 test_lossless_float
+         - tests/test_package.py:? 
+         - tests/test_package.py:? Black format check
+         - tests/test_jiter.py:84 test_decimal_mode
+         - tests/test_jiter.py:? Black format check
+         - tests/test_jiter.py:40 test_string_caching
+         - tests/test_jiter.py:71 test_duplicate_keys
+       1 skipped
+
+```
+
+---
+
+_****_
+
+We have several failing tests, which is expected since we haven't implemented all the features of the original `jiter` package yet. Let's fix the formatting issues first:
+
+---
+
+_****_
+
+```diff
+  """Test suite for jiter_pupy."""
++ 
+  
+  def test_version():
+      """Verify package exposes version."""
+      import jiter_pupy
++ 
+      assert jiter_pupy.__version__
+  
+```
+
+---
+
+_****_
+
+Now let's fix the formatting in the test_jiter.py file:
+
+---
+
+_****_
+
+```diff
+  """Test suite for jiter_pupy's jiter implementation."""
++ 
+  # this_file: tests/test_jiter.py
+  
+```
+
+---
+
+_****_
+
+
+
+
+
+---
+
+_**User**_
+
+I actually want this package to be importable straight as "import jiter", not "import jiter_pupy as jiter"
+
+---
+
+_**Assistant**_
+
+I'll update the package to be importable directly as `import jiter` instead of `import jiter_pupy as jiter`. This will require some changes to the package structure and imports.
+
+Let's first check the current project structure to understand what needs to be changed:
+
+---
+
+_****_
+
+<details>
+            <summary>Listed directory src • **1** results</summary>
+        
+| Name |
+|-------|
+| 📁 `jiter_pupy` |
+
+</details>
+
+---
+
+_****_
+
+We need to rename the `jiter_pupy` directory to `jiter` to make the package importable as `jiter`:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && mkdir -p src/jiter
+```
+
+```
+adam@Hamlet jiter_pupy % 
+
+```
+
+---
+
+_****_
+
+Now let's copy the files from the `jiter_pupy` directory to the new `jiter` directory:
+
+---
+
+_****_
+
+<details>
+            <summary>Listed directory src/jiter_pupy • **4** results</summary>
+        
+| Name |
+|-------|
+| 📄 `__version__.py` |
+| 📁 `__pycache__` |
+| 📄 `jiter.py` |
+| 📄 `__init__.py` |
+
+</details>
+
+---
+
+_****_
+
+Now I'll copy these files to the new `jiter` directory:
+
+---
+
+_****_
+
+```bash
+cd /Users/adam/Developer/vcs/github.twardoch/pub/jiter_pupy && cp src/jiter_pupy/*.py src/jiter/
+```
+
+```
+adam@Hamlet jiter_pupy % 
+
+```
+
+---
+
+_****_
+
+Now I'll check the contents of the new `jiter` directory to confirm the files were copied correctly:
+
+---
+
+_****_
+
+<details>
+            <summary>Listed directory src/jiter • **3** results</summary>
+        
+| Name |
+|-------|
+| 📄 `__init__.py` |
+| 📄 `__version__.py` |
+| 📄 `jiter.py` |
+
+</details>
+
+---
+
+_****_
+
+Now I need to update the `__init__.py` file in the new `jiter` directory to ensure it has the correct imports and exports:
+
+---
+
+_****_
+
+Read file: src/jiter/__init__.py
 
 ---
 

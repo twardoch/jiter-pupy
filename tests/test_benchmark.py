@@ -1,4 +1,4 @@
-"""Benchmark tests for jiter_pupy."""
+"""Benchmark tests for jiter."""
 
 # this_file: tests/test_benchmark.py
 
@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import pytest
-import jiter_pupy as jiter
+import jiter
 
 
 # Sample JSON data for benchmarking

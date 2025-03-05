@@ -1,6 +1,8 @@
-"""Test suite for jiter_pupy."""
+"""Test suite for jiter."""
+
 
 def test_version():
     """Verify package exposes version."""
-    import jiter_pupy
-    assert jiter_pupy.__version__
+    import jiter
+
+    assert jiter.__version__

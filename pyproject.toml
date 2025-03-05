@@ -63,8 +63,8 @@ requires = [
 
 
 [tool.coverage.paths]
-jiter_pupy = ["src/jiter_pupy", "*/jiter-pupy/src/jiter_pupy"]
-tests = ["tests", "*/jiter-pupy/tests"]
+jiter = ["src/jiter", "*/jiter/src/jiter"]
+tests = ["tests", "*/jiter/tests"]
 
 
 
@@ -76,21 +76,21 @@ exclude_lines = [
 ]
 
 [tool.coverage.run]
-source_pkgs = ["jiter_pupy", "tests"]
+source_pkgs = ["jiter", "tests"]
 branch = true
 parallel = true
 omit = [
-    "src/jiter_pupy/__about__.py",
+    "src/jiter/__about__.py",
 ]
 
 
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/jiter_pupy/__version__.py"
+version-file = "src/jiter/__version__.py"
 
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/jiter_pupy"]
+packages = ["src/jiter"]
 
 
 
@@ -104,10 +104,10 @@ python = ["3.10", "3.11", "3.12"]
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
-test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/jiter_pupy --cov=tests {args:tests}"
-type-check = "mypy src/jiter_pupy tests"
-lint = ["ruff check src/jiter_pupy tests", "ruff format --respect-gitignore src/jiter_pupy tests"]
-fix = ["ruff check  --fix --unsafe-fixes src/jiter_pupy tests", "ruff format --respect-gitignore src/jiter_pupy tests"]
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/jiter --cov=tests {args:tests}"
+type-check = "mypy src/jiter tests"
+lint = ["ruff check src/jiter tests", "ruff format --respect-gitignore src/jiter tests"]
+fix = ["ruff check  --fix --unsafe-fixes src/jiter tests", "ruff format --respect-gitignore src/jiter tests"]
 
 
 
@@ -118,7 +118,7 @@ dependencies = [
 
 
 [tool.hatch.envs.lint.scripts]
-typing = "mypy --install-types --non-interactive {args:src/jiter_pupy tests}"
+typing = "mypy --install-types --non-interactive {args:src/jiter tests}"
 style = ["ruff check {args:.}", "ruff format --respect-gitignore {args:.}"]
 fmt = ["ruff format --respect-gitignore {args:.}", "ruff check --fix {args:.}"]
 all = ["style", "typing"]
@@ -130,7 +130,7 @@ dependencies = [
 
 [tool.hatch.envs.test.scripts]
 test = "python -m pytest -n auto -p no:briefcase {args:tests}"
-test-cov = "python -m pytest -n auto -p no:briefcase --cov-report=term-missing --cov-config=pyproject.toml --cov=src/jiter_pupy --cov=tests {args:tests}"
+test-cov = "python -m pytest -n auto -p no:briefcase --cov-report=term-missing --cov-config=pyproject.toml --cov=src/jiter --cov=tests {args:tests}"
 bench = "python -m pytest -v -p no:briefcase tests/test_benchmark.py --benchmark-only"
 bench-save = "python -m pytest -v -p no:briefcase tests/test_benchmark.py --benchmark-only --benchmark-json=benchmark/results.json"
 
