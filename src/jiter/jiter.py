@@ -14,7 +14,30 @@ import re
 from decimal import Decimal
 from typing import Any, Literal
 
-from .__version__ import __version__
+# Handle version import in a way that works in different environments
+try:
+    # Try relative import first (works in normal package structure)
+    from .__version__ import __version__
+except (ImportError, ValueError):
+    try:
+        # Try absolute import (works in some environments)
+        from jiter.__version__ import __version__
+    except ImportError:
+        try:
+            # Try getting version from package metadata (most reliable for installed packages)
+            from importlib.metadata import version
+
+            try:
+                __version__ = version("jiter-pupy")
+            except:
+                try:
+                    __version__ = version("jiter")
+                except:
+                    # Fallback to a default version if all imports fail
+                    __version__ = "0.8.5"  # Hardcoded fallback version
+        except ImportError:
+            # Fallback to a default version if importlib.metadata is not available
+            __version__ = "0.8.5"  # Hardcoded fallback version
 
 # Global string cache
 _string_cache: dict[str, str] = {}
