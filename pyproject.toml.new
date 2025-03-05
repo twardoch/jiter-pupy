@@ -1,7 +1,7 @@
 # this_file: pyproject.toml
 [project]
 name = "jiter-pupy"
-dynamic = ["version"]
+version = "0.8.2"
 description = ""
 readme = "README.md"
 requires-python = ">=3.10"
@@ -55,8 +55,11 @@ Source = "https://github.com/twardoch/jiter-pupy"
 
 
 [build-system]
-requires = ["hatchling>=1.21.0", "hatch-vcs>=0.3.0"]
 build-backend = "hatchling.build"
+requires = [
+    "hatchling>=1.21.0"
+]
+
 
 [tool.coverage.paths]
 jiter = ["src/jiter", "*/jiter-pupy/src/jiter"]
@@ -87,8 +90,6 @@ packages = ["src/jiter"]
 [tool.hatch.build.targets.wheel.sources]
 "src/jiter" = "jiter"
 
-[tool.hatch.version]
-source = "vcs"
 
 
 [tool.hatch.envs.default]

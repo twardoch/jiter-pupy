@@ -14,7 +14,7 @@ import re
 from decimal import Decimal
 from typing import Any, Literal
 
-__version__ = "0.8.2"
+from jiter.__version__ import __version__
 
 # Global string cache
 _string_cache: dict[str, str] = {}
