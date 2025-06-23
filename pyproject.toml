@@ -81,11 +81,11 @@ omit = [
 
 
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/jiter"]
-
 [tool.hatch.build.targets.wheel.sources]
-"src/jiter" = "jiter"
+"src/jiter_pupy" = "jiter_pupy"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jiter_pupy"]
 
 [tool.hatch.version]
 source = "vcs"
