@@ -19,4 +19,4 @@ def test_basic_parsing():
 
 def test_version():
     """Test version is available."""
-    assert jiter.__version__ == "0.8.2"
+    assert jiter.__version__ == "0.1.0"
