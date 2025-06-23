@@ -124,7 +124,11 @@ class JiterDecoder(json.JSONDecoder):
         """Helper to cache/decode key and process value strings for caching if applicable."""
         key_str: str
         if isinstance(key_bytes_or_str, bytes): # Should always be str from decoder
-            key_str = self.cache_string_func(key_bytes_or_str) if get_cache_mode() == "keys" or get_cache_mode() == "all" else key_bytes_or_str.decode()
+            key_str = (
+                self.cache_string_func(key_bytes_or_str)
+                if get_cache_mode() in ["keys", "all"]
+                else key_bytes_or_str.decode()
+            )
         else: # is str
             # If it's already a string, it means the decoder produced it.
             # To enable key caching, we'd need it as bytes first.
