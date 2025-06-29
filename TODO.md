@@ -1,155 +1,141 @@
-# jiter_pupy (Pure Python jiter) Implementation Plan
+# Jiter-Pupy TODO List
 
-## 1. Overview
+## Critical Bug Fixes (Priority: High)
 
-Create a pure-Python implementation of the `jiter` package that is API-compatible with the original Rust-based `jiter`, but relies only on Python's standard library `json` module. This will serve as a drop-in replacement for environments where the compiled version cannot be used.
+- [ ] Fix version import issue for mobile environments by implementing fallback version handling
+- [ ] Add try/except block in __init__.py to handle missing __version__ module
+- [ ] Embed fallback version string directly in __init__.py
+- [ ] Test version import across different deployment scenarios (mobile, PyPy, etc.)
 
-## 2. Key Features to Implement
+## Error Handling Improvements (Priority: High)
 
-1. **Main Functions**:
-   - `from_json()` - Parse JSON bytes with all the original parameters
-   - `cache_clear()` - Clear the string cache
-   - `cache_usage()` - Get the size of the string cache in bytes
-   - `LosslessFloat` class - Represent float values without precision loss
+- [ ] Enhance JiterError with more precise line/column tracking
+- [ ] Implement custom error context tracking during parsing
+- [ ] Improve error message formatting to match jiter style exactly
+- [ ] Add error recovery suggestions in error messages
+- [ ] Fix imprecise duplicate key error location reporting
 
-2. **API Compatibility**:
-   - Ensure the function signatures match exactly
-   - Support all the same parameter options
-   - Replicate error messages where possible
-   - Match return types and behaviors
+## String Caching Optimizations (Priority: High)
 
-## 3. Implementation Steps
+- [ ] Implement byte-level string caching pre-processing layer
+- [ ] Create custom string interning system for better performance
+- [ ] Add cache hit/miss rate metrics
+- [ ] Optimize cache lookup performance with better data structures
+- [ ] Fix inefficient string value caching simulation
 
-### 3.1. Project Structure
+## Performance Optimizations (Priority: Medium)
 
-```
-jiter_pupy/
-├── __init__.py        # Exports the API
-├── __version__.py     # Version tracking
-├── parser.py          # Core JSON parsing implementation
-├── caching.py         # String caching functionality
-├── partial.py         # Partial JSON parsing
-├── float_handling.py  # Float handling (normal, decimal, lossless)
-└── exceptions.py      # Custom error handling to match jiter
-```
+- [ ] Profile parser to identify performance bottlenecks
+- [ ] Implement __slots__ for frequently created objects
+- [ ] Add object pooling for common types
+- [ ] Optimize Decimal creation for common float values
+- [ ] Implement fast path for standard float parsing
+- [ ] Add LRU eviction to string cache with configurable limits
+- [ ] Optimize LosslessFloat string operations
 
-### 3.2. LosslessFloat Class
+## Testing Enhancements (Priority: High)
 
-Implement a `LosslessFloat` class that:
-- Stores the original JSON bytes representation
-- Implements `__float__()`, `__str__()`, `__repr__()`, `as_decimal()`, and `__bytes__()`
-- Preserves the exact string representation from JSON
+- [ ] Port all test cases from original Rust jiter
+- [ ] Add property-based testing using Hypothesis
+- [ ] Implement fuzzing tests for malformed JSON
+- [ ] Add Unicode edge case tests
+- [ ] Create stress tests for large JSON files
+- [ ] Add performance regression tests
+- [ ] Test with extremely large numbers and deeply nested structures
+- [ ] Add memory exhaustion scenario tests
+- [ ] Achieve >95% test coverage
 
-### 3.3. String Caching System
+## Partial Parsing Improvements (Priority: Medium)
 
-Implement a caching system that:
-- Supports the same modes: `"all"`, `"keys"`, `"none"` (also True/False)
-- Preserves strings to avoid repeated creation
-- Tracks memory usage for `cache_usage()`
-- Can be cleared via `cache_clear()`
+- [ ] Improve "trailing-strings" mode implementation
+- [ ] Add better incomplete JSON recovery logic
+- [ ] Implement stateful parsing for better partial support
+- [ ] Add more granular partial parsing options
 
-### 3.4. Partial JSON Parsing
+## LosslessFloat Enhancements (Priority: Medium)
 
-Create a partial JSON parsing system that:
-- Handles incomplete JSON strings
-- Supports modes: `"off"`, `"on"`, `"trailing-strings"` (also True/False)
-- Correctly handles incomplete arrays, objects, and strings
+- [ ] Document limitations of LosslessFloat byte preservation
+- [ ] Optimize LosslessFloat memory usage
+- [ ] Add LosslessFloat arithmetic operations support
+- [ ] Improve LosslessFloat string representation handling
 
-### 3.5. Custom JSON Decoder
+## Documentation (Priority: Medium)
 
-Create a customized `json.JSONDecoder` that:
-- Catches duplicate keys when requested
-- Supports infinite/NaN values when allowed
-- Handles different float modes (float, decimal, lossless-float)
+- [ ] Create API reference documentation
+- [ ] Write migration guide from Rust jiter
+- [ ] Add performance tuning guide
+- [ ] Create comprehensive troubleshooting guide
+- [ ] Document all error codes and messages
+- [ ] Add more code examples for edge cases
 
-### 3.6. Error Handling
+## Deployment and Distribution (Priority: High)
 
-Implement error handling that:
-- Provides line and column information in error messages
-- Formats error messages to match jiter's style
-- Handles recursion limits similarly
+- [ ] Test installation on Windows, macOS, and Linux
+- [ ] Verify PyPy compatibility
+- [ ] Test in containerized environments
+- [ ] Create conda-forge package
+- [ ] Test with Python 3.13 when available
+- [ ] Add installation troubleshooting guide
 
-### 3.7. Integration with stdlib json
+## Benchmarking (Priority: Medium)
 
-- Use `json.loads()` as the core parser
-- Add pre-processing to handle features not supported by the standard library
-- Add post-processing to ensure return values match expectations
+- [ ] Create comprehensive benchmark suite
+- [ ] Compare performance with Rust jiter
+- [ ] Track performance across Python versions
+- [ ] Implement continuous performance monitoring
+- [ ] Create performance comparison documentation
 
-### 3.8. Performance Optimizations
+## Developer Experience (Priority: Low)
 
-- Minimize unnecessary string copies
-- Use efficient data structures for caching
-- Optimize partial parsing for common cases
+- [ ] Add JSON validation utilities
+- [ ] Implement pretty-printing options
+- [ ] Add debug mode with verbose output
+- [ ] Create JSON schema validation support
+- [ ] Add helper functions for common use cases
 
-### 3.9. Detailed Tasks
+## Integration Testing (Priority: Medium)
 
-1. **Core `from_json` function**:
-   - Create parameter validation and normalization
-   - Implement preprocessing for special values (Infinity, NaN)
-   - Handle different cache modes
-   - Support different float modes
-   - Implement duplicate key detection
+- [ ] Test with Django REST framework
+- [ ] Test with FastAPI
+- [ ] Test with pandas JSON reading
+- [ ] Test with requests library
+- [ ] Create integration examples
+- [ ] Document compatibility matrix
 
-2. **Caching Implementation**:
-   - Create a global cache for strings
-   - Implement cache size tracking
-   - Support different caching modes
-   - Create cache clearing functionality
+## Advanced Features (Priority: Low)
 
-3. **Float Handling**:
-   - Implement standard float parsing
-   - Add Decimal support
-   - Create LosslessFloat class with all required methods
+- [ ] Research streaming JSON parser implementation
+- [ ] Add async/await support for parsing
+- [ ] Implement custom object decoder hooks
+- [ ] Add plugin system for extensibility
+- [ ] Consider JSON serialization support
+- [ ] Explore Cython optimization possibilities
 
-4. **Partial JSON Processing**:
-   - Implement recovery for incomplete JSON
-   - Create special handling for trailing strings
-   - Ensure proper error messages when partial mode is off
+## Code Quality (Priority: Medium)
 
-5. **Error Messages**:
-   - Format errors to include line and column information
-   - Match jiter's error message formats
-   - Provide helpful context in error messages
+- [ ] Add type stubs for better IDE support
+- [ ] Improve mypy type coverage to 100%
+- [ ] Add more inline documentation
+- [ ] Refactor parser.py for better maintainability
+- [ ] Clean up jiter_old.py or remove if unused
 
-### 3.10. Testing Plan
+## Project Management (Priority: Low)
 
-1. Port existing tests from the original jiter package
-2. Create additional tests for edge cases
-3. Ensure all features have comprehensive test coverage:
-   - Caching modes
-   - Partial parsing modes
-   - Float handling modes
-   - Error cases
-   - Unicode handling
-   - Large JSON handling
+- [ ] Create contributor guidelines
+- [ ] Set up issue templates
+- [ ] Implement automated changelog generation
+- [ ] Create project roadmap
+- [ ] Set up project board for tracking
+- [ ] Establish security policy
 
-### 3.11. Documentation
+## Long-term Considerations
 
-1. Create docstrings that match the original implementation
-2. Add implementation notes for differences between pure Python and Rust versions
-3. Document any performance considerations
+- [ ] Investigate pure Python JSON parser alternatives
+- [ ] Research PyPy-specific optimizations
+- [ ] Consider implementing custom tokenizer
+- [ ] Explore WebAssembly compilation options
+- [ ] Plan for Python 3.14+ features
 
-## 4. Implementation Challenges
+---
 
-1. **Performance Gap**: The pure Python implementation will be slower than the Rust version
-2. **Error Reporting**: Matching exact line/column numbers in error messages
-3. **Partial Parsing**: Implementing this without a custom parser is challenging
-4. **LosslessFloat**: Ensuring exact preservation of float representation
-
-## 5. Timeline
-
-1. **Phase 1**: Basic implementation of from_json with standard features (1-2 days)
-2. **Phase 2**: Implement LosslessFloat and advanced float handling (1 day)
-3. **Phase 3**: Add caching system (1 day)
-4. **Phase 4**: Implement partial parsing (1-2 days)
-5. **Phase 5**: Error handling and formatting (1 day)
-6. **Phase 6**: Testing and compatibility verification (1-2 days)
-7. **Phase 7**: Performance optimization (1-2 days)
-8. **Phase 8**: Documentation and final adjustments (1 day)
-
-## 6. Notes on Implementation Strategy
-
-- Focus on API compatibility first, then optimize performance
-- Use standard library tools as much as possible
-- Consider future maintainability when choosing implementation approaches
-- Document clearly where behavior might subtly differ from the Rust implementation
+Note: Tasks are roughly ordered by priority within each section. High-priority items should be addressed first to ensure stability and compatibility.
