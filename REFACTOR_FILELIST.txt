@@ -1,0 +1,15 @@
+548	./llms.txt
+59	./uv.lock
+28	./jiter-python.txt
+16	./src/jiter_pupy/parser.py
+15	./src/jiter_pupy/jiter_old.py
+14	./README.md
+9	./PLAN.md
+7	./src/jiter_pupy/partial.py
+5	./src/jiter_pupy/exceptions.py
+5	./src/jiter_pupy/jiter.py
+5	./TODO.md
+5	./pyproject.toml
+5	./pyproject.toml.new
+4	./tests/test_jiter.py
+4	./tests/test_benchmark.py
